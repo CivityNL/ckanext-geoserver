@@ -17,29 +17,28 @@ class Layer(object):
     """
 
     @classmethod
-    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None,
-                lat_field=None, lng_field=None):
+    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None):
         """
         Publishes a layer as WMS and WFS OGC services in Geoserver.  Calls the 'Layer' class before the object
         instance to make a subclass via inheritance.
         """
-        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, store, workspace, geoserver, lat_field, lng_field)
+        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store, workspace, lat_field, lng_field)
         if layer.create():
             return layer
         else:
             return None
+
     # Define properties of the object instance which will be passed into the class method
-    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None,
-                 lat_field=None, lng_field=None):
+    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None):
         self.geoserver = Geoserver.from_ckan_config()
         self.name = layer_name
-	self.layer_version = layer_version
+        self.layer_version = layer_version
         self.username = username
         self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
         self.package_id = package_id
         self.resource_id = resource_id
         self.store = self.geoserver.get_datastore(workspace, store, workspace_name, layer_version)
-	self.workspace_name = workspace_name
+        self.workspace_name = workspace_name
 
         url = self.file_resource["url"]
         kwargs = {"resource_id": self.file_resource["id"]}
@@ -95,10 +94,10 @@ class Layer(object):
         # If the layer already exists in Geoserver then return it
 
         layer = self.geoserver.get_layer(self.name)
-	layer_workspace_name = None
+        layer_workspace_name = None
 
-	if layer:
-	    layer_workspace_name = str(layer.resource._workspace).replace(' ','').split('@')[0]
+        if layer:
+            layer_workspace_name = str(layer.resource._workspace).replace(' ','').split('@')[0]
 
         if not layer or (layer_workspace_name and layer_workspace_name != self.workspace_name):
             #Construct layer creation request.
@@ -168,28 +167,27 @@ class Layer(object):
         def capabilities_url(service_url, workspace, layer, service, version):
 
             try:
-                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % \
-                        (workspace, service, version, workspace, layer)
+                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % \ (workspace, service, version, workspace, layer)
                 return service_url.replace("/rest", specifications)
             except:
                 service = service.lower()
                 specifications = "/" + service + "?request=GetCapabilities"
                 return service_url.replace("/rest", specifications)
 
-	def ckanOGCServicesURL(serviceUrl):
+        def ckanOGCServicesURL(serviceUrl):
             newServiceUrl = serviceUrl
             try:
                 siteUrl = config.get('ckan.site_url', None)
-
+    
                 if siteUrl:
-		    encodedURL = urllib.quote_plus(serviceUrl, '')
+                    encodedURL = urllib.quote_plus(serviceUrl, '')
                     newServiceUrl = siteUrl+"/geoserver/get-ogc-services?url="+encodedURL+"&workspace="+self.workspace_name
-
+    
             except:
                 return serviceUrl
-
+    
             return newServiceUrl
-
+        
         # WMS Resource Creation, layer: is important for ogcpreview ext used for WMS, and feature_type is used for WFS in ogcpreview ext
         data_dict = {
             'package_id': self.package_id,
@@ -200,9 +198,9 @@ class Layer(object):
             'protocol': 'OGC:WMS',
             'format': 'OGC:WMS',
             'feature_type':"%s:%s" % (self.store.workspace.name, self.name),
-	    'layer':"%s" % self.name,
+            'layer':"%s" % self.name,
             'resource_format': 'data-service',
-	    'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1'),
+            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1'),
         }
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
@@ -217,11 +215,11 @@ class Layer(object):
             "format": "OGC:WFS",
             "feature_type":"%s:%s" % (self.store.workspace.name, self.name),
             'resource_format': 'data-service',
-	    'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
+            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
         })
         self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
-
-        # Return the two resource dicts
+    
+            # Return the two resource dicts
         return self.wms_resource, self.wfs_resource
 
     def remove_geo_resources(self):
@@ -231,7 +229,6 @@ class Layer(object):
         """
 
         context = {"user": self.username}
-        results = toolkit.get_action("resource_search")(context,
-                                                        {"query": "parent_resource:%s" % self.file_resource["id"]})
+        results = toolkit.get_action("resource_search")(context, {"query": "parent_resource:%s" % self.file_resource["id"]})
         for result in results.get("results", []):
             toolkit.get_action("resource_delete")(context, {"id": result["id"]})

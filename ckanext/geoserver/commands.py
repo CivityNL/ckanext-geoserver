@@ -88,20 +88,20 @@ class SetupDatastoreCommand(cli.CkanCommand):
             'api_call_type' : u'paster',
         }
 
-	result = {
+        result = {
             'success': False,
             'message': toolkit._("Not enough information to publish this resource.")
         }
 
 
         # set other api call parameters 
-    	username    = context.get("user", None)
-    	lat_field   = u'LatDegree'
-    	lng_field   = u'LongDegree'
+        username    = context.get("user", None)
+        lat_field   = u'LatDegree'
+        lng_field   = u'LongDegree'
 
         # get usgin csv resouce id
-        pkg         = toolkit.get_action('package_show')(context, {'id': package_id})
-	resources   = pkg.get('resources', [])
+        pkg = toolkit.get_action('package_show')(context, {'id': package_id})
+        resources   = pkg.get('resources', [])
 
         for resource in resources:
             #if resource['format'].lower() == 'csv':
@@ -110,11 +110,10 @@ class SetupDatastoreCommand(cli.CkanCommand):
                 break
 
 
-	# get layer from package
-	try:
-
-	    md_package = None
-	    extras     = pkg.get('extras', [])
+        # get layer from package
+        try:
+            md_package = None
+            extras = pkg.get('extras', [])
 
             for extra in extras:
                 key = extra.get('key', None)
@@ -123,8 +122,8 @@ class SetupDatastoreCommand(cli.CkanCommand):
                     break
 
             resourceDescription = md_package.get('resourceDescription', {})
-	    layer_name          = resourceDescription.get('usginContentModelLayer', resource_id)
-	    version             = resourceDescription.get('usginContentModelVersion', None)
+            layer_name  = resourceDescription.get('usginContentModelLayer', resource_id)
+            version = resourceDescription.get('usginContentModelVersion', None)
 
             # handle harvested datasets that do not have a md_package
             if layer_name == resource_id and version == None:
@@ -142,7 +141,7 @@ class SetupDatastoreCommand(cli.CkanCommand):
                 layer_name  = key_arr[1]
                 version     = u'' + key_arr[2] 
 
-	except:
+        except:
             print str(datetime.datetime.now()) + ' PUBLISH_OGC: ERROR, Could not get required API CALL parameters for dataset ' + package_id
             sys.stdout.flush()
 
@@ -154,8 +153,8 @@ class SetupDatastoreCommand(cli.CkanCommand):
         layer_uuid     = ''.join(random.choice(string.ascii_uppercase) for _ in range(32))
         workspace_name = layer_uuid.replace('-','') + layer_name
 
-	try:
-	    result = toolkit.get_action('geoserver_publish_ogc')(context, {
+        try:
+            result = toolkit.get_action('geoserver_publish_ogc')(context, {
                 'package_id'     : package_id, 
                 'resource_id'    : resource_id, 
                 'workspace_name' : workspace_name, 
@@ -168,7 +167,7 @@ class SetupDatastoreCommand(cli.CkanCommand):
             print str(datetime.datetime.now()) + ' PUBLISH_OGC: Dataset ' + package_id + ' HAS been published to the GeoServer'
             sys.stdout.flush()
 
-	except:
+        except:
             print str(datetime.datetime.now()) + ' PUBLISH_OGC: ERROR, Dataset ' + package_id + ' has NOT published to the GeoServer'
             sys.stdout.flush()
 

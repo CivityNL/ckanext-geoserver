@@ -33,7 +33,7 @@ class Shapefile(object):
         
         # Get the path to the file
         url = self.resource["url"]
-        self.file_path = file_path_from_url(url)
+        self.file_path = file_path_from_url_shp(url)
         
         # Check that it is a valid zip file
         self.is_valid = self.validate()
@@ -248,7 +248,7 @@ class Shapefile(object):
         return dataSource.GetLayerByIndex(0).GetName()
 
     def table_name(self):
-        return self.get_name().lower().replace("-", "_") # Postgresql will have the name screwballed
+        return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
 
     def output_geom(self, source):
         # Find the geometry type of the source shapefile

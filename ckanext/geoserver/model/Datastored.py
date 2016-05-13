@@ -98,7 +98,7 @@ class Datastored(object):
             trans.commit()
 
             # Update values in the Geometry column
-            sql = "UPDATE \"%s\" SET \"%s\" = geometryfromtext('POINT(' || \"%s\" || ' ' || \"%s\" || ')', 4326)"
+            sql = "UPDATE \"%s\" SET \"%s\" = st_geometryfromtext('POINT(' || \"%s\" || ' ' || \"%s\" || ')', 4326)"
             sql = sql % (self.resource_id, self.geo_col, self.lng_col, self.lat_col)
 
             trans = connection.begin()

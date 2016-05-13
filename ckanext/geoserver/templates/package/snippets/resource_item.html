@@ -1,7 +1,7 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% if res.format.lower() == 'csv' %}
+{% if res.format.lower() == 'csv' and can_edit %}
 <li>
   <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
     <i class="icon-globe"></i>
@@ -9,6 +9,15 @@
   </a>
 </li>
 {% endif %}
+{% if res.format.lower() == 'zip' and can_edit %}
+<li>
+  <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
+    <i class="icon-globe"></i>
+    {{ _('Publish OGC from SHP') }}
+  </a>
+</li>
+{% endif %}
+
 <li>
   <a href="{{ url }}">
     {% if res.can_be_previewed %}
@@ -40,4 +49,5 @@
 </li>
 {% endif %}
 {% resource "geoserver/geoserver_publish_ogc.js" %}
+{% resource "geoserver/geoserver_publish_ogc_shp.js" %}
 {% endblock %}

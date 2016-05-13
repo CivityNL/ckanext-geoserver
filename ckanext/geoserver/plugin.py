@@ -29,10 +29,9 @@ class GeoserverPlugin(p.SingletonPlugin):
     def before_map(self, map):
         controller = 'ckanext.geoserver.controllers.ogc:OgcController'
         map.connect('geoserver_publish_ogc', '/geoserver/publish-ogc', controller=controller, action='publishOGC')
+        map.connect('geoserver_ogc_get_capabilities', '/geoserver/get-ogc-services', controller=controller, action='getOGCServices')
 
-	map.connect('geoserver_ogc_get_capabilities', '/geoserver/get-ogc-services', controller=controller, action='getOGCServices')
-
-	return map
+        return map
 
 
     # Functionality that this plugin provides through the Action API

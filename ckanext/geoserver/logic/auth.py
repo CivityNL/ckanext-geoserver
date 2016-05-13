@@ -10,8 +10,7 @@ def _datastore_auth(context, data_dict):
     if not authorized:
         return {
             'success': False,
-            'msg': plugin.toolkit._('User {0} not authorized to update resource {1}'\
-                    .format(str(user), data_dict['id']))
+            'msg': plugin.toolkit._('User {0} not authorized to update resource {1}'\.format(str(user), data_dict['id']))
         }
     else:
         return {'success': True}

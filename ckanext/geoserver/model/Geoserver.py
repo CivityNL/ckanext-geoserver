@@ -26,7 +26,7 @@ class Geoserver(Catalog):
             url = url.replace('geoserver://', 'http://')
 
         # Make the connection
-        return cls(url, username=user, password=pwd)
+        return cls(url, username=user, password=pwd, disable_ssl_certificate_validation = True)
 
     #Make this method to create workspace/namespace uri by given input if provided
     def default_workspace(self, name=None, uri=None):
@@ -35,10 +35,10 @@ class Geoserver(Catalog):
 
         @return: workspace instance
         """
-	if name is None:
+        if name is None:
             name = config.get("geoserver.workspace_name", "ckan")
-	
-	if uri is None:
+
+        if uri is None:
             uri = config.get("geoserver.workspace_uri", "http://localhost/ckan")
 
         ngds_workspace = self.get_workspace(name)

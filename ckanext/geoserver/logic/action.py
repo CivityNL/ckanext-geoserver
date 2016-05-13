@@ -40,33 +40,29 @@ def publish_ogc(context, data_dict):
 
     # Publish a layer
     def pub():
-        layer = Layer.publish(package_id, resource_id, workspace_name, layer_name, layer_version, username, datastore, lat_field=lat_field,
-                              lng_field=lng_field)
-
+        layer = Layer.publish(package_id, resource_id, workspace_name, layer_name, layer_version, username, datastore, lat_field=lat_field, lng_field=lng_field)
         return layer
 
     try:
         l = pub()
         if l is None:
-	    log.debug("Failed to generate a Geoserver layer.")
+        log.debug("Failed to generate a Geoserver layer.")
             if api_call_type == 'ui':
                 h.flash_error(_("Failed to generate a Geoserver layer."))
             raise Exception(toolkit._("Layer generation failed"))
         else:
             # csv content should be spatialized or a shapefile uploaded, Geoserver updated, resources appended.
             #  l should be a Layer instance. Return whatever you wish to
-	    log.debug("This resource has successfully been published as an OGC service.")
+            log.debug("This resource has successfully been published as an OGC service.")
             if api_call_type == 'ui':
                 h.flash_success(_("This resource has successfully been published as an OGC service."))
-            return {"success": True,
-		    "message": _("This resource has successfully been published as an OGC service.")
-		}
+            return {"success": True, 
+                "message": _("This resource has successfully been published as an OGC service.")
+                }
     except socket.error:
-	log.debug("Error connecting to Geoserver.")
-
+        log.debug("Error connecting to Geoserver.")
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to Geoserver."))
-
 
         # Confirm that everything went according to plan
 
@@ -88,8 +84,7 @@ def unpublish_ogc(context, data_dict):
     package_id = model.Resource.get(resource_id).resource_group.package_id
 
     def unpub():
-        layer = Layer(geoserver=geoserver, layer_name=layer_name, resource_id=resource_id, package_id=package_id,
-                      username=username)
+        layer = Layer(geoserver=geoserver, layer_name=layer_name, resource_id=resource_id, package_id=package_id, username=username)
         return layer
 
     try:
@@ -97,15 +92,13 @@ def unpublish_ogc(context, data_dict):
     except socket.error:
         log.debug("Error connecting to geoserver. Please contact the site administrator if this problem persists.")
         if api_call_type == 'ui':
-            h.flash_error(
-                _("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
+            h.flash_error(_("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
         return False
 
     layer.remove()
     log.debug("This resource has successfully been unpublished.")
     if api_call_type == 'ui':
-        h.flash_success(
-            _("This resource has successfully been unpublished."))
+        h.flash_success(_("This resource has successfully been unpublished."))
     return True
 
 def map_search_wms(context, data_dict):

@@ -5,6 +5,7 @@ from ckan.plugins import toolkit
 from ckan.logic import NotFound
 from ckan.controllers import storage
 from pylons import config
+import shutil
 
 def check_published(resource):
     """
@@ -22,14 +23,27 @@ def check_published(resource):
             except (NotFound):
                 continue
 
-            if extras['parent_resource'] == resource_id\
-                and ( extras['protocol'].lower() == 'ogc:wms' or extras['ogc_type'].lower() == 'ogc:wfs'):
+            if extras['parent_resource'] == resource_id and ( extras['protocol'].lower() == 'ogc:wms' or extras['ogc_type'].lower() == 'ogc:wfs'):
                 print resource.state
                 if resource.state !='active':
                     return False
                 spatialized = True
                 break
     return spatialized
+
+def file_path_from_url_shp(url):
+    """
+    Given a file's URL, find the file itself on this system
+    """
+    tmpFolder = "/var/tmp/"
+    pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
+    label = re.match(pattern, url).group("label")
+    tmpFile = urllib2.urlopen(url)
+    with open(tmpFolder+label, 'wb') as fp:
+        shutil.copyfileobj(tmpFile, fp)
+
+    return tmpFolder+label
+
 
 def file_path_from_url(url):
     """
