@@ -39,7 +39,6 @@ class Layer(object):
         self.resource_id = resource_id
         self.store = self.geoserver.get_datastore(workspace, store, workspace_name, layer_version)
         self.workspace_name = workspace_name
-
         url = self.file_resource["url"]
         kwargs = {"resource_id": self.file_resource["id"]}
 
@@ -68,7 +67,6 @@ class Layer(object):
         """
         Creates the new layer to Geoserver and then creates the resources in Package(CKAN).
         """
-
         self.create_layer()
         self.create_geo_resources()
 
@@ -92,10 +90,8 @@ class Layer(object):
         """
 
         # If the layer already exists in Geoserver then return it
-
         layer = self.geoserver.get_layer(self.name)
         layer_workspace_name = None
-
         if layer:
             layer_workspace_name = str(layer.resource._workspace).replace(' ','').split('@')[0]
 
@@ -126,8 +122,7 @@ class Layer(object):
             )
 
             if not 200 <= response_headers.status < 300:
-                raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status,
-                                                                                          response))
+                raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
 
             layer = self.geoserver.get_layer(self.name)
 
@@ -167,7 +162,7 @@ class Layer(object):
         def capabilities_url(service_url, workspace, layer, service, version):
 
             try:
-                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % \ (workspace, service, version, workspace, layer)
+                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % (workspace, service, version, workspace, layer)
                 return service_url.replace("/rest", specifications)
             except:
                 service = service.lower()
@@ -178,16 +173,16 @@ class Layer(object):
             newServiceUrl = serviceUrl
             try:
                 siteUrl = config.get('ckan.site_url', None)
-    
+
                 if siteUrl:
                     encodedURL = urllib.quote_plus(serviceUrl, '')
                     newServiceUrl = siteUrl+"/geoserver/get-ogc-services?url="+encodedURL+"&workspace="+self.workspace_name
-    
+
             except:
                 return serviceUrl
-    
+
             return newServiceUrl
-        
+
         # WMS Resource Creation, layer: is important for ogcpreview ext used for WMS, and feature_type is used for WFS in ogcpreview ext
         data_dict = {
             'package_id': self.package_id,
@@ -202,6 +197,7 @@ class Layer(object):
             'resource_format': 'data-service',
             'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1'),
         }
+
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
         # WFS Resource Creation
@@ -217,9 +213,10 @@ class Layer(object):
             'resource_format': 'data-service',
             'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
         })
+
         self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
-    
-            # Return the two resource dicts
+
+        # Return the two resource dicts
         return self.wms_resource, self.wfs_resource
 
     def remove_geo_resources(self):

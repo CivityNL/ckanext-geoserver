@@ -35,11 +35,10 @@ class Geoserver(Catalog):
 
         @return: workspace instance
         """
-        if name is None:
-            name = config.get("geoserver.workspace_name", "ckan")
 
-        if uri is None:
-            uri = config.get("geoserver.workspace_uri", "http://localhost/ckan")
+        name = config.get("geoserver.workspace_name", "ckan")
+
+        uri = config.get("geoserver.workspace_uri", "http://localhost/ckan")
 
         ngds_workspace = self.get_workspace(name)
         if ngds_workspace is None:

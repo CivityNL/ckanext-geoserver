@@ -3,7 +3,7 @@ from osgeo import osr
 import zipfile
 from os import path
 from re import search
-from ckanext.geoserver.misc.helpers import file_path_from_url
+from ckanext.geoserver.misc.helpers import file_path_from_url_shp
 from pylons import config
 from ckan.plugins import toolkit
 

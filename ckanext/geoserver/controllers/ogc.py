@@ -2,7 +2,6 @@ from ckan.lib.navl.dictization_functions import unflatten
 from ckan.lib.base import (request, BaseController, model, c, response, abort)
 from ckan.model.resource import Resource
 import ckanext.geoserver.logic.action as action
-import usginmodels
 from pylons.decorators import jsonify
 from ckan.logic import (tuplize_dict, clean_dict, parse_params)
 #from ckanext.metadata.logic import action as get_meta_action
@@ -18,84 +17,48 @@ import re
 class OgcController(BaseController):
     @jsonify
     def publishOGC(self):
-    """
-    Publishes the resource content into Geoserver.
-    """
+        """
+        Publishes the resource content into Geoserver.
+        """
 
-    if request.method != 'POST' or not request.is_xhr:
-        return {
-                'success': False,
-                'message': toolkit._("Bad request - JSON Error: No request body data")
-            }
+        if request.method != 'POST' or not request.is_xhr:
+            return {'success': False, 'message': toolkit._("Bad request - JSON Error: No request body data")}
 
-    context = {'model': model, 'session': model.Session,
-    'user': c.user or c.author, 'auth_user_obj': c.userobj}
+        context = {'model': model, 'session': model.Session, 'user': c.user or c.author, 'auth_user_obj': c.userobj}
 
-    data = clean_dict(unflatten(tuplize_dict(parse_params(request.params))))
+        data = clean_dict(unflatten(tuplize_dict(parse_params(request.params))))
 
-    result = {'success': False,
-                  'message': toolkit._("Not enough information to publish this resource.")
-            }
+        result = {'success': False, 'message': toolkit._("Not enough information to publish this resource.")}
 
-    resource_id = data.get("resource_id", None)
-    username = context.get("user", None)
-    package_id = data.get("package_id", None)
-    lat_field = data.get("geoserver_lat_field", None)
-    lng_field = data.get("geoserver_lng_field", None)
+        resource_id = data.get("resource_id", None)
+        username = context.get("user", None)
+        package_id = data.get("package_id", None)
+        lat_field = data.get("geoserver_lat_field", None)
+        lng_field = data.get("geoserver_lng_field", None)
 
-    #get layer from package
-    try:
-        #md_package = None
-        #pkg = toolkit.get_action('package_show')(context, {'id': package_id})
-        #extras = pkg.get('extras', [])
+        #get layer from package
+        try:
+            layer = resource_id
+            version = 1.0
 
-        #    for extra in extras:
-        #        key = extra.get('key', None)
-        #        if key == 'md_package':
-        #            md_package = json.loads(extra.get('value'))
-        #            break
+        except:
+            return result
 
-        #resourceDescription = md_package.get('resourceDescription', {})
-        #layer = resourceDescription.get('usginContentModelLayer', resource_id)
-        layer = resource_id
-        #version = resourceDescription.get('usginContentModelVersion', None)
-        version = None
+        layer_name = data.get("layer_name", layer)
+        workspace_name = layer_name
 
-            # handle harvested datasets that do not have a md_package
+        if None in [resource_id, layer_name, username, package_id, version]:
+            return result
 
-        #    if layer == resource_id and version == None:
-        #        usgin_tag = []
-
-        #        for tag in pkg['tags']:
-        #            if tag['name'].startswith('usgincm:'):
-        #                usgin_tag.append(tag['name']) 
-
-        #        for key,value in (get_meta_action.get_usgin_prefix()).iteritems():
-        #            if reduce(lambda v1,v2: v1 or v2, map(lambda v: v in usgin_tag, value)):
-        #                key_arr = key.split("+")
-        #                break
-
-        #        layer   = key_arr[1]
-        #        version = key_arr[2] 
-            
-    except:
-        return result
-
-    layer_name = data.get("layer_name", layer)
-    workspace_name = layer_name
-
-    if None in [resource_id, layer_name, username, package_id, version]:
-        return result
-
-    try:
-        result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version})
-    except:
-        return {
+        try:
+            result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version})
+        except:
+            return {
                 'success': False,
                 'message': toolkit._("An error occured while processing your request, please contact your administrator.")
             }
-
-    return result
+    
+        return result
 
 
     """

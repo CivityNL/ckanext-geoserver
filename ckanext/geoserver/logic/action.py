@@ -1,4 +1,3 @@
-import logging
 import ckan.logic as logic
 from ckanext.geoserver.model.Geoserver import Geoserver
 from ckanext.geoserver.model.Layer import Layer
@@ -10,7 +9,6 @@ from ckan import model
 import socket
 import sys
 
-log = logging.getLogger(__name__)
 _get_or_bust = logic.get_or_bust
 
 
@@ -46,21 +44,16 @@ def publish_ogc(context, data_dict):
     try:
         l = pub()
         if l is None:
-        log.debug("Failed to generate a Geoserver layer.")
             if api_call_type == 'ui':
                 h.flash_error(_("Failed to generate a Geoserver layer."))
             raise Exception(toolkit._("Layer generation failed"))
         else:
             # csv content should be spatialized or a shapefile uploaded, Geoserver updated, resources appended.
             #  l should be a Layer instance. Return whatever you wish to
-            log.debug("This resource has successfully been published as an OGC service.")
             if api_call_type == 'ui':
                 h.flash_success(_("This resource has successfully been published as an OGC service."))
-            return {"success": True, 
-                "message": _("This resource has successfully been published as an OGC service.")
-                }
+            return {"success": True, "message": _("This resource has successfully been published as an OGC service.")}
     except socket.error:
-        log.debug("Error connecting to Geoserver.")
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to Geoserver."))
 
@@ -90,13 +83,11 @@ def unpublish_ogc(context, data_dict):
     try:
         layer = unpub()
     except socket.error:
-        log.debug("Error connecting to geoserver. Please contact the site administrator if this problem persists.")
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
         return False
 
     layer.remove()
-    log.debug("This resource has successfully been unpublished.")
     if api_call_type == 'ui':
         h.flash_success(_("This resource has successfully been unpublished."))
     return True
