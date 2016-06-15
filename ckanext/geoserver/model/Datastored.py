@@ -1,8 +1,10 @@
+# coding=utf-8
 from pylons import config
 import ckanext.datastore.db as db
 from ckan.plugins import toolkit
 from sqlalchemy.exc import ProgrammingError
 import logging
+import re
 log = logging.getLogger(__name__)
 
 class Datastored(object):
@@ -33,12 +35,17 @@ class Datastored(object):
         """
         for item in field_list:
             dirty = item['id']
-            clean = dirty.replace(" ","_")
+            clean = re.sub('µ','micro_', dirty)
+            clean = re.sub('/','_per_', clean)
+            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', '_', clean)
+            if re.match('^[0-9]', clean):
+                clean = "_"+clean
+            
             if dirty != clean:
-                sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO {new_val}'.format(
+                sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
                     res_id=self.resource_id,
                     old_val=item['id'],
-                    new_val=dirty.replace(" ","_")
+                    new_val=clean
                 )
                 trans = connection.begin()
                 connection.execute(sql)
@@ -49,12 +56,17 @@ class Datastored(object):
     def dirty_fields(self, connection, field_list):
         for item in field_list:
             dirty = item['id']
-            clean = dirty.replace(" ","_")
+            clean = re.sub('µ','micro_', dirty)
+            clean = re.sub('/','_per_', clean)
+            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', ' ', clean)
+            if re.match('^[0-9]', clean):
+                clean = "_"+clean
+            
             if dirty != clean:
-                sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO {new_val}'.format(
+                sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
                     res_id=self.resource_id,
                     old_val=item['id'],
-                    new_val=dirty.replace("_"," ")
+                    new_val=clean
                 )
                 trans = connection.begin()
                 connection.execute(sql)
@@ -107,6 +119,7 @@ class Datastored(object):
 
             return True
 
+        connection.close()
         return True
 
     def table_name(self):

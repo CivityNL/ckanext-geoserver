@@ -107,8 +107,7 @@ class Layer(object):
 
             data = {
                 "featureType": {
-                    "name": self.name,
-                    "nativeName": self.data.table_name()
+                    "name": self.name
                 }
             }
 
@@ -125,10 +124,11 @@ class Layer(object):
                 raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
 
             layer = self.geoserver.get_layer(self.name)
+            return layer
 
         # Add the layer's name to the file resource
         self.file_resource.update({"layer_name": self.name})
-        self.file_resource = toolkit.get_action("resource_update")({"user": self.username}, self.file_resource)
+        self.file_resource = toolkit.get_action("resource_patch")({"user": self.username}, self.file_resource)
 
         # Return the layer
         return layer
@@ -145,7 +145,7 @@ class Layer(object):
         if self.file_resource.get("layer_name"):
             del self.file_resource["layer_name"]
 
-        self.file_resource = toolkit.get_action("resource_update")({"user": self.username}, self.file_resource)
+        self.file_resource = toolkit.get_action("resource_patch")({"user": self.username}, self.file_resource)
 
         return True
 

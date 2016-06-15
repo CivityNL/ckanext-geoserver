@@ -76,6 +76,28 @@ ckan.module('geoserver_publish_ogc_shp', function($, _) {
 				}
 			})
 		},
+		postSearch: function(id, callback) {
+    		console.log("geoserver_publish_ogc_shp_postSearch")
+			var path, type, dataType, data;
+			path = '/api/action/datastore_search';
+			type = 'POST';
+			dataType = 'JSON';
+			data = JSON.stringify({
+				'resource_id': id
+			});
+			$.ajax({
+				url: path,
+				type: type,
+				dataType: dataType,
+				data: data,
+				success: function(response) {
+					callback(response);
+				},
+				error: function(data) {
+					console.log(data)
+				}
+			})
+		},
 		parseResponse: function(res) {
 			var fields, resFields, i;
 			fields = [];

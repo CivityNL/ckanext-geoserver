@@ -31,14 +31,10 @@ ckan.module('geoserver_resource_form', function($, _) {
         },
         _setPublish: function(val) {
             var publish;
-            if (val) {
-                publish = val;
-            } else {
-                return publish;
-            }
+            return true;
         },
         publishServices: function() {
-            var publish = this._setPublish();
+            var publish = this._setPublish(true);
             return {
                 'publish_ogc': publish
             };
