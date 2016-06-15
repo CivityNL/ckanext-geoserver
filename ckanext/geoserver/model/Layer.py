@@ -7,6 +7,7 @@ from ckan.plugins import toolkit
 from pylons import config
 import json
 import urllib
+import re
 
 class Layer(object):
     """
@@ -107,7 +108,7 @@ class Layer(object):
 
             data = {
                 "featureType": {
-                    "name": self.name
+                    "name": "_"+self.name
                 }
             }
 

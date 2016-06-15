@@ -117,8 +117,11 @@ class Datastored(object):
             connection.execute(sql)
             trans.commit()
 
-            return True
-
+        sql = "CREATE MATERIALIZED VIEW \"_%s\" AS SELECT * FROM \"%s\""
+        sql = sql % (self.resource_id, self.resource_id)
+        trans = connection.begin()
+        connection.execute(sql)
+        trans.commit()
         connection.close()
         return True
 
