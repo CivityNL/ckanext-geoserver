@@ -6,6 +6,7 @@ from re import search
 from ckanext.geoserver.misc.helpers import file_path_from_url_shp
 from pylons import config
 from ckan.plugins import toolkit
+import re
 
 class Shapefile(object):
     resource = {}
@@ -162,7 +163,7 @@ class Shapefile(object):
         if not destination_source:
             destination_source = self.get_destination_source()
         if not name:
-            name = self.table_name()
+            name = self.getName()
 
         layer = destination_source.GetLayerByName(name)
 
@@ -248,7 +249,12 @@ class Shapefile(object):
         return dataSource.GetLayerByIndex(0).GetName()
 
     def table_name(self):
-        return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
+        #return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
+        id = self.resource['id']
+
+    def getName(self):
+        name = '_' + re.sub('-','_', self.resource['id'])
+        return name.encode('ascii', 'ignore')
 
     def output_geom(self, source):
         # Find the geometry type of the source shapefile

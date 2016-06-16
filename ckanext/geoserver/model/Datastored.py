@@ -118,7 +118,7 @@ class Datastored(object):
             trans.commit()
 
         sql = "CREATE MATERIALIZED VIEW \"_%s\" AS SELECT * FROM \"%s\""
-        sql = sql % (self.resource_id, self.resource_id)
+        sql = sql % (re.sub('-','_', self.resource_id), self.resource_id)
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()

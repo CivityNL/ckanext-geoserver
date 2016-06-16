@@ -108,7 +108,8 @@ class Layer(object):
 
             data = {
                 "featureType": {
-                    "name": "_"+self.name
+                    "name": self.getName(),
+                    "nativeName": self.getName(),
                 }
             }
 
@@ -230,3 +231,6 @@ class Layer(object):
         results = toolkit.get_action("resource_search")(context, {"query": "parent_resource:%s" % self.file_resource["id"]})
         for result in results.get("results", []):
             toolkit.get_action("resource_delete")(context, {"id": result["id"]})
+
+    def getName(self):
+        return "_" + re.sub('-','_', self.name)
