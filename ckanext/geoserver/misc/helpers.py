@@ -36,8 +36,7 @@ def file_path_from_url_shp(url):
     Given a file's URL, find the file itself on this system
     """
     tmpFolder = "/var/tmp/"
-    pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
-    label = re.match(pattern, url).group("label")
+    label = url.rsplit('/', 1)[-1]
     tmpFile = urllib2.urlopen(url)
     with open(tmpFolder+label, 'wb') as fp:
         shutil.copyfileobj(tmpFile, fp)
