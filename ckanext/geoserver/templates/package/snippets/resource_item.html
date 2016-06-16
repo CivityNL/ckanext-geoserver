@@ -1,7 +1,7 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% if res.format.lower() == 'csv' and can_edit %}
+{% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private%}
 <li>
   <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
     <i class="icon-globe"></i>
