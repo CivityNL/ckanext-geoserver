@@ -31,6 +31,15 @@ def check_published(resource):
                 break
     return spatialized
 
+def file_path_from_url(url):
+    """
+    Given a file's URL, find the file itself on this system
+    """
+
+    pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
+    label = re.match(pattern, url).group("label")
+    return get_url_for_file(urllib2.unquote(label))
+
 def file_path_from_url_shp(url):
     """
     Given a file's URL, find the file itself on this system
@@ -42,16 +51,6 @@ def file_path_from_url_shp(url):
         shutil.copyfileobj(tmpFile, fp)
 
     return tmpFolder+label
-
-
-def file_path_from_url(url):
-    """
-    Given a file's URL, find the file itself on this system
-    """
-
-    pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>\d{4}-.+)$"
-    label = re.match(pattern, url).group("label")
-    return get_url_for_file(urllib2.unquote(label))
 
 def get_url_for_file(label):
     """

@@ -86,7 +86,7 @@ ckan.module('geoserver_publish_ogc', function($, _) {
             type = 'POST';
             dataType = 'JSON';
             data = JSON.stringify({
-                'resource_id': id
+				'resource_id': id
             });
             $.ajax({
                 url: path,

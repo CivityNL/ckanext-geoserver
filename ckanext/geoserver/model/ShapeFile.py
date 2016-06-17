@@ -249,8 +249,7 @@ class Shapefile(object):
         return dataSource.GetLayerByIndex(0).GetName()
 
     def table_name(self):
-        #return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
-        id = self.resource['id']
+        return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
 
     def getName(self):
         name = '_' + re.sub('-','_', self.resource['id'])

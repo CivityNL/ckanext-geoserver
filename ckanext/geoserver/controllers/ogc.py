@@ -57,7 +57,7 @@ class OgcController(BaseController):
                 'success': False,
                 'message': toolkit._("An error occured while processing your request, please contact your administrator.")
             }
-    
+
         return result
 
 

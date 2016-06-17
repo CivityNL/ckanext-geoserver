@@ -61,7 +61,7 @@ class Datastored(object):
             clean = re.sub('[][}{()?$%&!#*^°@,;: ]', ' ', clean)
             if re.match('^[0-9]', clean):
                 clean = "_"+clean
-            
+
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
                     res_id=self.resource_id,

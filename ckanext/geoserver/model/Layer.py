@@ -109,7 +109,7 @@ class Layer(object):
             data = {
                 "featureType": {
                     "name": self.getName(),
-                    "nativeName": self.getName(),
+                    "nativeName": self.getName()
                 }
             }
 
