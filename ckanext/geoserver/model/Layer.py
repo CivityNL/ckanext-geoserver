@@ -109,7 +109,9 @@ class Layer(object):
             data = {
                 "featureType": {
                     "name": self.getName(),
-                    "nativeName": self.getName()
+                    "nativeName": self.getName(),
+                    "title": self.file_resource["name"],
+                    "abstract": self.file_resource["description"]
                 }
             }
 
