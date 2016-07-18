@@ -46,7 +46,7 @@ class Shapefile(object):
             # Open the zipfile as read-only
             with zipfile.ZipFile(self.file_path) as zf:
                 required = [".shp", ".shx", ".dbf"]
-                optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml"]
+                optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
                 
                 # Look at the file extensions in the zipfile
                 extensions = [path.splitext(info.filename)[1] for info in zf.infolist()]
