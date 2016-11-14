@@ -10,15 +10,15 @@
     <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
 
       {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
-      {% if published  == "false" %}
-      <a  class="btn btn-success" href="#" data-module="geoserver_publish_ogc_resource_descriptor" data-module-package="{{ pkg.id }}">
-        <i class="icon-globe"></i>
-        {{ _('Publish OGC') }}
-      </a>
-      {% else %}
+      {% if published  == "true" %}
       <a  class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_resource_descriptor" data-module-package="{{ pkg.id }}">
         <i class="icon-globe"></i>
         {{ _('Unpublish OGC') }}
+      </a>
+      {% else %}
+      <a  class="btn btn-success" href="#" data-module="geoserver_publish_ogc_resource_descriptor" data-module-package="{{ pkg.id }}">
+        <i class="icon-globe"></i>
+        {{ _('Publish OGC') }}
       </a>
 
       {% endif %}
