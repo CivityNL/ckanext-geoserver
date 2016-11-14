@@ -67,17 +67,16 @@ def unpublish_ogc(context, data_dict):
     """
     resource_id = data_dict.get("resource_id")
     layer_name = data_dict.get("layer_name")
-    layer_name = "NGDS:" + resource_id
     username = context.get('user')
     api_call_type = data_dict.get("api_call_type", "ui")
     file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
+    package_id = data_dict.get("package_id")
 
     geoserver = Geoserver.from_ckan_config()
 
-    package_id = model.Resource.get(resource_id).resource_group.package_id
-
+    
     def unpub():
-        layer = Layer(geoserver=geoserver, layer_name=layer_name, resource_id=resource_id, package_id=package_id, username=username)
+        layer = Layer.unpublish(geoserver, layer_name, resource_id, package_id, username)
         return layer
 
     try:
@@ -87,10 +86,9 @@ def unpublish_ogc(context, data_dict):
             h.flash_error(_("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
         return False
 
-    layer.remove()
     if api_call_type == 'ui':
         h.flash_success(_("This resource has successfully been unpublished."))
-    return True
+    return {"success": True, "message": _("This resource has successfully been unpublished.")}
 
 def map_search_wms(context, data_dict):
 

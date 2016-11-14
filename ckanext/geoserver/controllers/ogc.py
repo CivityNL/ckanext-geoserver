@@ -13,6 +13,10 @@ import requests
 import urllib
 from pylons.config import config
 import re
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 class OgcController(BaseController):
     @jsonify
@@ -52,6 +56,46 @@ class OgcController(BaseController):
 
         try:
             result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version})
+        except:
+            return {
+                'success': False,
+                'message': toolkit._("An error occured while processing your request, please contact your administrator.")
+            }
+
+        return result
+
+    @jsonify
+    def unpublishOGC(self):
+        """
+        Publishes the resource content into Geoserver.
+        """
+        if request.method != 'POST' or not request.is_xhr:
+            return {'success': False, 'message': toolkit._("Bad request - JSON Error: No request body data")}
+
+        context = {'model': model, 'session': model.Session, 'user': c.user or c.author, 'auth_user_obj': c.userobj}
+
+        data = clean_dict(unflatten(tuplize_dict(parse_params(request.params))))
+
+        result = {'success': False, 'message': toolkit._("Not enough information to unpublish this resource.")}
+        resource_id = data.get("resource_id", None)
+        username = context.get("user", None)
+        package_id = data.get("package_id", None)
+
+        #get layer from package
+        try:
+            layer = resource_id
+            version = 1.0
+        except:
+            return result
+
+        layer_name = data.get("layer_name", layer)
+        workspace_name = layer_name
+
+        if None in [resource_id, layer_name, username, package_id, version]:
+            return result
+
+        try:
+            result = toolkit.get_action('geoserver_unpublish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'layer_version': version})
         except:
             return {
                 'success': False,

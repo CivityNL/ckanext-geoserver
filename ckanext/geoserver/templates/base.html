@@ -1,1 +1,7 @@
 {% ckan_extends %}
+
+{% block styles %}
+	{{ super() }}
+{% resource 'geoserver/geoserver.css' %}
+{% resource "geoserver/geoserver_publish_ogc_resource_descriptor.js" %}
+{% endblock %}

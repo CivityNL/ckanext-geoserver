@@ -90,7 +90,6 @@ class Datastored(object):
         try:
             # This will fail with a ProgrammingError if the table does not exist
             fields = db._get_fields({"connection": connection}, conn_params)
-
         except ProgrammingError as ex:
             raise toolkit.ObjectNotFound(toolkit._("Resource not found in datastore database"))
 
@@ -117,8 +116,8 @@ class Datastored(object):
             connection.execute(sql)
             trans.commit()
 
-        sql = "CREATE MATERIALIZED VIEW \"_%s\" AS SELECT * FROM \"%s\""
-        sql = sql % (re.sub('-','_', self.resource_id), self.resource_id)
+        sql = "DROP MATERIALIZED VIEW IF EXISTS \"_%s\"; CREATE MATERIALIZED VIEW \"_%s\" AS SELECT * FROM \"%s\""
+        sql = sql % (re.sub('-','_', self.resource_id), re.sub('-','_', self.resource_id), self.resource_id)
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()

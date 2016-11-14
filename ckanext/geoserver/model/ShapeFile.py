@@ -40,14 +40,14 @@ class Shapefile(object):
         self.is_valid = self.validate()
 
     def validate(self):
-        """Make sure that the uploaded zip file is a valid shapefile"""        
+        """Make sure that the uploaded zip file is a valid shapefile"""
         # Check that it is a zip file
         if zipfile.is_zipfile(self.file_path):
             # Open the zipfile as read-only
             with zipfile.ZipFile(self.file_path) as zf:
                 required = [".shp", ".shx", ".dbf"]
                 optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
-                
+
                 # Look at the file extensions in the zipfile
                 extensions = [path.splitext(info.filename)[1] for info in zf.infolist()]
                 
@@ -63,14 +63,14 @@ class Shapefile(object):
         """Unzip the shapefile into a pre-determined directory next to it"""
         # Generate the path for the directory to be unzipped to
         unzipped_dir = self.file_path[:-4] + "_UNZIPPED"
-        
+
         # Open the zipfile and extract everything (overwrite if there's stuff there??)
         with zipfile.ZipFile(self.file_path) as zf:
             zf.extractall(unzipped_dir)
         
         # Return the path to the unzipped directory
         return unzipped_dir
-    
+
     def get_source_layer(self):
         """Get a OGRLayer for this shapefile"""
 
@@ -112,7 +112,7 @@ class Shapefile(object):
             params.group("password")
         )
         ogr_connection_string = "PG: host=%s port=5432 dbname=%s user=%s password=%s" % connection
-        
+
         # Generate the destination DataSource
         try:
             output_driver = ogr.GetDriverByName("PostgreSQL")
@@ -131,7 +131,7 @@ class Shapefile(object):
         # Get the shapefile OGR Layer and its "definition"
         source = self.get_source_layer()
         source_def = source.GetLayerDefn()
-        
+
         # Read some shapefile properties
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(epsg)
@@ -144,12 +144,12 @@ class Shapefile(object):
 
         # Create the destination layer in memory
         new_layer = destination_source.CreateLayer(name, srs, geom_type, ["OVERWRITE=YES"])
-        
+
         # Iterate through shapefile fields, add them to the new layer
         for i in range(source_def.GetFieldCount()):
             field_def = source_def.GetFieldDefn(i)
             new_layer.CreateField(field_def)
-        
+
         # Commit it
         new_layer.CommitTransaction()
 
@@ -157,7 +157,7 @@ class Shapefile(object):
         self.ogr_destination["layer"] = new_layer
 
         return new_layer
-        
+
     def get_destination_layer(self, destination_source=None, name=None):
         """Given an OGRDataSource (destination_source), find an OGRLayer within it by name"""
         if not destination_source:
@@ -174,7 +174,7 @@ class Shapefile(object):
         self.ogr_destination["layer"] = layer
 
         return layer
-    
+
     def publish(self, destination_layer=None):
         """Move shapefile data into the given destination OGRLayer"""
         if not destination_layer:
@@ -186,7 +186,7 @@ class Shapefile(object):
 
         # Cache the OGR objects so they don't get cleaned up
         self.ogr_destination["srs"] = target_srs
-        
+
         # Setup the coordinate transformation
         source = self.get_source_layer()
         source_srs = source.GetSpatialRef()
@@ -200,10 +200,10 @@ class Shapefile(object):
 
         # Iterate through the shapefile features. Project each one and add it to the destination
         source_record = source.GetNextFeature()
-        while source_record is not None:            
+        while source_record is not None:
             # Create a new, blank feature in the destination layer
             dest_record = ogr.Feature(dest_def)
-            
+
             # Set its geometry
             geom = source_record.GetGeometryRef()
 
@@ -218,7 +218,7 @@ class Shapefile(object):
             # Set its attributes from the source feature
             dest_record.SetFrom(source_record)
             dest_record.SetGeometry(geom)
-            
+
             # Save it to the destination layer and iterate
             destination_layer.CreateFeature(dest_record)
             source_record = source.GetNextFeature()
@@ -252,7 +252,9 @@ class Shapefile(object):
         return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
 
     def getName(self):
-        name = '_' + re.sub('-','_', self.resource['id'])
+        id = self.resource['id']
+        id = re.sub('-','_', id)
+        name = '_'+id
         return name.encode('ascii', 'ignore')
 
     def output_geom(self, source):

@@ -29,6 +29,14 @@ class Layer(object):
         else:
             return None
 
+    @classmethod
+    def unpublish(cls, geoserver, layer_name, resource_id, package_id, username):
+        layer = cls(package_id, resource_id, None, layer_name, None, username, geoserver, None, None, None, None)
+        if layer.remove():
+            return True
+        else:
+            return False
+
     # Define properties of the object instance which will be passed into the class method
     def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None):
         self.geoserver = Geoserver.from_ckan_config()
@@ -78,8 +86,11 @@ class Layer(object):
         Removes the Layer from Geoserver and the geo resources from the pacakage.
         """
 
-        self.remove_layer()
-        self.remove_geo_resources()
+        ready = self.remove_layer()
+        if (ready):
+            ready = self.remove_geo_resources()
+
+        return ready
 
     def create_layer(self):
         """
@@ -123,9 +134,9 @@ class Layer(object):
                 json.dumps(data),
                 request_headers
             )
-
-            if not 200 <= response_headers.status < 300:
-                raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
+            if (not "already exists in store" in response):
+                if (not 200 <= response_headers.status < 300):
+                    raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
 
             layer = self.geoserver.get_layer(self.name)
             return layer
@@ -141,15 +152,10 @@ class Layer(object):
         """
         Removes the layer from geoserver.
         """
-        layer = self.geoserver.get_layer(self.name)
+        layer = self.geoserver.get_layer(self.getName())
         if layer:
             self.geoserver.delete(layer, purge=True, recurse=True)
 
-        # Remove the layer_name from the file resource
-        if self.file_resource.get("layer_name"):
-            del self.file_resource["layer_name"]
-
-        self.file_resource = toolkit.get_action("resource_patch")({"user": self.username}, self.file_resource)
 
         return True
 
@@ -233,6 +239,8 @@ class Layer(object):
         results = toolkit.get_action("resource_search")(context, {"query": "parent_resource:%s" % self.file_resource["id"]})
         for result in results.get("results", []):
             toolkit.get_action("resource_delete")(context, {"id": result["id"]})
+
+        return True
 
     def getName(self):
         return "_" + re.sub('-','_', self.name)
