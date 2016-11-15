@@ -19,7 +19,6 @@ class Geoserver(Catalog):
         userInfo = re.search("://(?P<auth>(?P<user>.+?):(?P<pass>.+?)@)?.+", url)
         user = userInfo.group("user") or "admin"
         pwd = userInfo.group("pass") or "geoserver"
-
         # Remove it from the connection URL if it was there
         url = url.replace(userInfo.group("auth") or "", "")
         if url:
@@ -54,17 +53,14 @@ class Geoserver(Catalog):
 
         # Extract values from ckan config file
         datastore_url = config.get('ckan.datastore.write_url','postgresql://ckanuser:pass@localhost/datastore')
-
         # Extract connection details
         pattern = "://(?P<user>.+?):(?P<pass>.+?)@(?P<host>.+?)/(?P<database>.+)$"
         details = re.search(pattern, datastore_url)
-
         # Give a name to the workspace and specify the datastore
         if workspace is None:
             workspace = self.default_workspace(layer_name, layer_version)
         if store_name is None:
             store_name = details.group("database")
-
         # Check if the datastore exists, create if it does not exist
         try:
             ds = self.get_store(store_name, workspace)

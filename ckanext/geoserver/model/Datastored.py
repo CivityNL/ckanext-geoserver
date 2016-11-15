@@ -23,7 +23,6 @@ class Datastored(object):
         self.lat_col = lat_field
         self.lng_col = lng_field
         self.connection_url = config.get('ckan.datastore.write_url')
-
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
 
@@ -39,8 +38,7 @@ class Datastored(object):
             clean = re.sub('/','_per_', clean)
             clean = re.sub('[][}{()?$%&!#*^°@,;: ]', '_', clean)
             if re.match('^[0-9]', clean):
-                clean = "_"+clean
-            
+                clean = "_"+clean      
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
                     res_id=self.resource_id,
@@ -81,12 +79,10 @@ class Datastored(object):
         Resource in datastore database is checked for Geometry field. If the field doesn't exists then calculates the
         geometry field value and creates it in the table.
         """
-
         # Get the connection parameters for the datastore
         conn_params = {'connection_url': self.connection_url, 'resource_id': self.resource_id}
         engine = db._get_engine(conn_params)
         connection = engine.connect()
-
         try:
             # This will fail with a ProgrammingError if the table does not exist
             fields = db._get_fields({"connection": connection}, conn_params)
@@ -99,7 +95,6 @@ class Datastored(object):
             fields.append({'id': self.geo_col, 'type': u'geometry'})
 
             self.clean_fields(connection, fields)
-
             # SQL to create the geometry column
             sql = "SELECT AddGeometryColumn('public', '%s', '%s', 4326, 'GEOMETRY', 2)" % (self.resource_id, self.geo_col)
 

@@ -31,7 +31,6 @@ class Shapefile(object):
     def __init__(self, resource_id=""):
         # Get the resource
         self.resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
-        
         # Get the path to the file
         url = self.resource["url"]
         self.file_path = file_path_from_url_shp(url)
@@ -50,7 +49,6 @@ class Shapefile(object):
 
                 # Look at the file extensions in the zipfile
                 extensions = [path.splitext(info.filename)[1] for info in zf.infolist()]
-                
                 # Check that all the required extensions are there
                 if len([ext for ext in required if ext in extensions]) == len(required):
                     # Check that there are not extension in there that are not required
@@ -67,26 +65,21 @@ class Shapefile(object):
         # Open the zipfile and extract everything (overwrite if there's stuff there??)
         with zipfile.ZipFile(self.file_path) as zf:
             zf.extractall(unzipped_dir)
-        
         # Return the path to the unzipped directory
         return unzipped_dir
 
     def get_source_layer(self):
         """Get a OGRLayer for this shapefile"""
-
         # Where is the unzipped shapefile?
         if self.unzipped_dir is None:
             self.unzipped_dir = self.unzip()
-
         # Generate the OGR DataSource
         input_driver = ogr.GetDriverByName("ESRI Shapefile")
         input_datasource = input_driver.Open(self.unzipped_dir, 0)
-        
         # A dataSource is always an array, but shapefiles are always by themselves. Get the layer
         layer = input_datasource.GetLayerByIndex(0)
         geom = layer.GetExtent()
         geom_extent = [[geom[2],geom[0]],[geom[3],geom[1]]]
-
         # Cache the OGR objects so they don't get cleaned up
         self.ogr_source["driver"] = input_driver
         self.ogr_source["source"] = input_datasource
@@ -244,7 +237,6 @@ class Shapefile(object):
         # Generate the OGR DataSource
         inputDriver = ogr.GetDriverByName("ESRI Shapefile")
         dataSource = inputDriver.Open(self.unzipped_dir, 0)
-
         # A dataSource is always an array, but shapefiles are always by themselves. Get the layer
         return dataSource.GetLayerByIndex(0).GetName()
 

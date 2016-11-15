@@ -23,6 +23,7 @@ def publish_ogc(context, data_dict):
     layer_name = data_dict.get("layer_name", resource_id)
     username = context.get("user", None)
     package_id = data_dict.get("package_id", None)
+    join_key = data_dict.get("join_key", None)
     lat_field = data_dict.get("col_latitude", None)
     lng_field = data_dict.get("col_longitude", None)
     datastore = data_dict.get("geoserver_datastore", None)
@@ -38,7 +39,9 @@ def publish_ogc(context, data_dict):
 
     # Publish a layer
     def pub():
-        layer = Layer.publish(package_id, resource_id, workspace_name, layer_name, layer_version, username, datastore, lat_field=lat_field, lng_field=lng_field)
+        log.info("pub.1")
+        layer = Layer.publish(package_id, resource_id, workspace_name, layer_name, layer_version, username, datastore, lat_field=lat_field, lng_field=lng_field, join_key=join_key)
+        log.info("pub.2")
         return layer
 
     try:
@@ -65,16 +68,17 @@ def unpublish_ogc(context, data_dict):
     Un-publishes the Geoserver layer based on the resource identifier. Retrieves the Geoserver layer name and package
      identifier to construct layer and remove it.
     """
-    resource_id = data_dict.get("resource_id")
-    layer_name = data_dict.get("layer_name")
+    resource_id = data_dict.get("resource_id", None)
+    layer_name = data_dict.get("layer_name", None)
     username = context.get('user')
     api_call_type = data_dict.get("api_call_type", "ui")
-    file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
-    package_id = data_dict.get("package_id")
+    package_id = data_dict.get("package_id", None)
+    if resource_id == 'resource_descriptor_multi':
+        file_resource = toolkit.get_action("package_show")(None, {"id": package_id})    
+    else:
+        file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
 
     geoserver = Geoserver.from_ckan_config()
-
-    
     def unpub():
         layer = Layer.unpublish(geoserver, layer_name, resource_id, package_id, username)
         return layer
@@ -84,6 +88,7 @@ def unpublish_ogc(context, data_dict):
     except socket.error:
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
+
         return False
 
     if api_call_type == 'ui':
@@ -91,7 +96,6 @@ def unpublish_ogc(context, data_dict):
     return {"success": True, "message": _("This resource has successfully been unpublished.")}
 
 def map_search_wms(context, data_dict):
-
     def wms_resource(resource):
         if resource.get("protocol", {}) == "OGC:WMS":
             return True

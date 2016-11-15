@@ -24,7 +24,6 @@ class OgcController(BaseController):
         """
         Publishes the resource content into Geoserver.
         """
-
         if request.method != 'POST' or not request.is_xhr:
             return {'success': False, 'message': toolkit._("Bad request - JSON Error: No request body data")}
 
@@ -33,10 +32,10 @@ class OgcController(BaseController):
         data = clean_dict(unflatten(tuplize_dict(parse_params(request.params))))
 
         result = {'success': False, 'message': toolkit._("Not enough information to publish this resource.")}
-
         resource_id = data.get("resource_id", None)
         username = context.get("user", None)
         package_id = data.get("package_id", None)
+        join_key = data.get("join_key", None)
         lat_field = data.get("geoserver_lat_field", None)
         lng_field = data.get("geoserver_lng_field", None)
 
@@ -55,7 +54,9 @@ class OgcController(BaseController):
             return result
 
         try:
-            result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version})
+            log.info("publishOGC.4")
+            result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version, 'join_key': join_key})
+            log.info("publishOGC.5")
         except:
             return {
                 'success': False,

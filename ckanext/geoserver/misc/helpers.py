@@ -35,7 +35,6 @@ def file_path_from_url(url):
     """
     Given a file's URL, find the file itself on this system
     """
-
     pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
     label = re.match(pattern, url).group("label")
     return get_url_for_file(urllib2.unquote(label))

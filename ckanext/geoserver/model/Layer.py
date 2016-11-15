@@ -2,6 +2,7 @@ from __future__ import absolute_import
 from geoserver.support import url
 from ckanext.geoserver.model.Geoserver import Geoserver
 from ckanext.geoserver.model.Datastored import Datastored
+from ckanext.geoserver.model.MultiDatastored import MultiDatastored
 from ckanext.geoserver.model.ShapeFile import Shapefile
 from ckan.plugins import toolkit
 from pylons import config
@@ -18,12 +19,12 @@ class Layer(object):
     """
 
     @classmethod
-    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None):
+    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
         """
         Publishes a layer as WMS and WFS OGC services in Geoserver.  Calls the 'Layer' class before the object
         instance to make a subclass via inheritance.
         """
-        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store, workspace, lat_field, lng_field)
+        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store, workspace, lat_field, lng_field, join_key)
         if layer.create():
             return layer
         else:
@@ -38,31 +39,44 @@ class Layer(object):
             return False
 
     # Define properties of the object instance which will be passed into the class method
-    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None):
+    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
+        log.info("layer.0")
         self.geoserver = Geoserver.from_ckan_config()
         self.name = layer_name
         self.layer_version = layer_version
         self.username = username
-        self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
+        if resource_id == 'resource_descriptor_multi':
+            self.file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
+        else:
+            self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
         self.package_id = package_id
         self.resource_id = resource_id
         self.store = self.geoserver.get_datastore(workspace, store, workspace_name, layer_version)
         self.workspace_name = workspace_name
-        url = self.file_resource["url"]
-        kwargs = {"resource_id": self.file_resource["id"]}
-
-        # Determine whether to handle the data with shapefile or datastored csv operators
-        if url.endswith('.zip'):
-            cls = Shapefile
-        elif url.endswith('.csv'):
-            cls = Datastored
-            kwargs.update({
-                "lat_field": lat_field,
-                "lng_field": lng_field
-            })
+        self.join_key = join_key
+        if resource_id != 'resource_descriptor_multi':
+            url = self.file_resource["url"]
+            kwargs = {"resource_id": self.file_resource["id"]}
+        	# Determine whether to handle the data with shapefile or datastored csv operators
+            if url.endswith('.zip'):
+                cls = Shapefile
+            elif url.endswith('.csv'):
+                cls = Datastored
+                kwargs.update({
+                    "lat_field": lat_field,
+                    "lng_field": lng_field
+                    })
+            else:
+				# The resource cannot be spatialized
+                raise Exception(toolkit._("Only CSV and Shapefile data can be spatialized"))
         else:
-            # The resource cannot be spatialized
-            raise Exception(toolkit._("Only CSV and Shapefile data can be spatialized"))
+            cls = MultiDatastored
+            kwargs = {
+                "package_id": self.package_id,
+                "lat_field": lat_field,
+                "lng_field": lng_field,
+                "join_key": self.join_key
+                }
 
         # '**' unpacks the kwargs dictionary which can contain an arbitrary number of arguments
         self.data = cls(**kwargs)
@@ -117,12 +131,16 @@ class Layer(object):
                 "featuretypes"
             ])
 
+            if self.resource_id == 'resource_descriptor_multi':
+                description = self.file_resource["notes"]
+            else:
+                description = self.file_resource["description"]
             data = {
                 "featureType": {
                     "name": self.getName(),
                     "nativeName": self.getName(),
                     "title": self.file_resource["name"],
-                    "abstract": self.file_resource["description"]
+                    "abstract": description
                 }
             }
 
@@ -144,7 +162,6 @@ class Layer(object):
         # Add the layer's name to the file resource
         self.file_resource.update({"layer_name": self.name})
         self.file_resource = toolkit.get_action("resource_patch")({"user": self.username}, self.file_resource)
-
         # Return the layer
         return layer
 
@@ -207,7 +224,6 @@ class Layer(object):
             'resource_format': 'data-service',
             'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1'),
         }
-
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
         # WFS Resource Creation
@@ -223,7 +239,6 @@ class Layer(object):
             'resource_format': 'data-service',
             'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
         })
-
         self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
 
         # Return the two resource dicts
@@ -243,4 +258,7 @@ class Layer(object):
         return True
 
     def getName(self):
-        return "_" + re.sub('-','_', self.name)
+        if self.resource_id == 'resource_descriptor_multi':
+            return "_" + re.sub('-','_', self.package_id)
+        else:
+            return "_" + re.sub('-','_', self.name)
