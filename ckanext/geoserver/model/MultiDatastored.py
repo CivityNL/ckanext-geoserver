@@ -201,7 +201,7 @@ class MultiDatastored(object):
                 geom_key = fields.get('field_id')
 
         log.info("multiDatastored_publish.6.2")
-        selectsql += "\""+geom[0]+"\".\""+geo_col+"\" as \"geometry."+geo_col+"\", "
+        selectsql += "\""+geom[0]+"\".\""+self.geo_col+"\" as \"geometry."+self.geo_col+"\", "
         log.info("multiDatastored_publish.6.2.1")
 
         for fields in obs_fields:
@@ -220,8 +220,6 @@ class MultiDatastored(object):
             selectsql += "SELECT * FROM public.\""+entry+"\" UNION ALL "
 
         log.info("multiDatastored_publish.6.4")
-        selectsql = selectsql[:-2] + " "
-
         selectsql = selectsql[:-11] + ") as observations "
         selectsql += "ON public.\""+geom[0]+"\".\""+geom_key+"\" = observations.\""+obs_key+"\""
 
