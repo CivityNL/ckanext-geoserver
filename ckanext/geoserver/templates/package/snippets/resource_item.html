@@ -1,7 +1,8 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private%}
+{% set rd_only = h.geoserver_check_resource_descriptor_only() %}
+{% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not rd_only %}
 <li>
   <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
     <i class="icon-globe"></i>
@@ -9,7 +10,7 @@
   </a>
 </li>
 {% endif %}
-{% if res.format.lower() == 'zip' and can_edit %}
+{% if res.format.lower() == 'zip' and can_edit and not c.pkg_dict.private%}
 <li>
   <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
     <i class="icon-globe"></i>

@@ -78,10 +78,11 @@ pip install -r requirements.txt
 After installation completes, edit `/etc/ckan/default/production.ini` with the following custom configurations:
 
 ```
-geoserver.rest_url = https://admin:geoserver@Server_adress_here/geoserver/rest 
+geoserver.rest_url = https://geoserverLogin:geoserverPassword@Geoserver_adress_here/geoserver/rest
 geoserver.default_workspace = ckan
 geoserver.workspace_name = ckan
 geoserver.workspace_uri = http://localhost:5000/ckan #not crucial, can be anything
+geoserver.resource_descriptor_only = true #publish/unpublish options only based on existence of resource descriptor
 ```
 
 Also requires this to be set (should already be set when following the earlier documentation):

@@ -58,3 +58,15 @@ def get_url_for_file(label):
     bucket = config.get('ckan.storage.bucket', 'default')
     ofs = storage.get_ofs()
     return ofs.get_url(bucket, label).replace("file://", "")
+
+def check_resource_descriptor_only():
+    '''
+    Return the config option "geoserver.resource_descriptor_only"
+    '''
+    rd_only = config.get('geoserver.resource_descriptor_only', 'default')
+    if rd_only is not None:
+        if rd_only == 'true':
+            return True
+        else:
+            return False
+    return None
