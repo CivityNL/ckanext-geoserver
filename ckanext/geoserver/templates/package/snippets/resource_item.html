@@ -4,10 +4,18 @@
 {% set rd_only = h.geoserver_check_resource_descriptor_only() %}
 {% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not rd_only %}
 <li>
+  {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
+  {% if published  == "true" %}
+  <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
+    <i class="icon-globe"></i>
+    {{ _('Unpublish OGC') }}
+  </a>
+  {% else %}
   <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
     <i class="icon-globe"></i>
     {{ _('Publish OGC') }}
   </a>
+  {% endif %}
 </li>
 {% endif %}
 {% if res.format.lower() == 'zip' and can_edit and not c.pkg_dict.private%}
@@ -22,22 +30,22 @@
 <li>
   <a href="{{ url }}">
     {% if res.can_be_previewed %}
-      <i class="icon-bar-chart"></i>
-      {{ _('Preview') }}
+    <i class="icon-bar-chart"></i>
+    {{ _('Preview') }}
     {% else %}
-      <i class="icon-info-sign"></i>
-      {{ _('More information') }}
+    <i class="icon-info-sign"></i>
+    {{ _('More information') }}
     {% endif %}
   </a>
 </li>
 <li>
   <a href="{{ res.url }}" class="resource-url-analytics" target="_blank">
     {% if res.can_be_previewed %}
-      <i class="icon-download"></i>
-      {{ _('Download') }}
+    <i class="icon-download"></i>
+    {{ _('Download') }}
     {% else %}
-      <i class="icon-external-link"></i>
-      {{ _('Go to resource') }}
+    <i class="icon-external-link"></i>
+    {{ _('Go to resource') }}
     {% endif %}
   </a>
 </li>

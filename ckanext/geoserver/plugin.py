@@ -85,5 +85,6 @@ class GeoserverPlugin(p.SingletonPlugin):
     def get_helpers(self):
         return {
             'geoserver_check_published': helpers.check_published,
-            'geoserver_check_resource_descriptor_only': helpers.check_resource_descriptor_only
+            'geoserver_check_resource_descriptor_only': helpers.check_resource_descriptor_only,
+            'geoserver_shapefile_publishing_requirements_fulfiled': helpers.shapefile_publishing_requirements_fulfiled
         }

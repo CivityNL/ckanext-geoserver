@@ -72,6 +72,17 @@ class Datastored(object):
             else:
                 pass
 
+    def unpublish(self):
+        conn_params = {'connection_url': self.connection_url, 'package_id': self.resource_id}
+        engine = db._get_engine(conn_params)
+        connection = engine.connect()
+        sql = "DROP MATERIALIZED VIEW IF EXISTS _" + re.sub('-','_', self.resource_id)
+        trans = connection.begin()
+        connection.execute(sql)
+        trans.commit()
+        connection.close()
+
+        return True
 
     def publish(self):
         """

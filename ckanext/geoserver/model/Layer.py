@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from geoserver.support import url
 from ckanext.geoserver.model.Geoserver import Geoserver
 from ckanext.geoserver.model.Datastored import Datastored
-from ckanext.geoserver.model.MultiDatastored import MultiDatastored
 from ckanext.geoserver.model.ShapeFile import Shapefile
+from ckanext.geoserver.model.MultiDatastored import MultiDatastored
+from ckanext.geoserver.model.MultiShapeFile import MultiShapeFile
 from ckan.plugins import toolkit
 from pylons import config
 import json
@@ -45,7 +46,7 @@ class Layer(object):
         self.name = layer_name
         self.layer_version = layer_version
         self.username = username
-        if resource_id == 'resource_descriptor_multi':
+        if resource_id == 'resource_descriptor_multi' or resource_id == 'shapefile_multi':
             self.file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
         else:
             self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
@@ -54,7 +55,7 @@ class Layer(object):
         self.store = self.geoserver.get_datastore(workspace, store, workspace_name, layer_version)
         self.workspace_name = workspace_name
         self.join_key = join_key
-        if resource_id != 'resource_descriptor_multi':
+        if resource_id != 'resource_descriptor_multi' and resource_id != 'shapefile_multi':
             url = self.file_resource["url"]
             kwargs = {"resource_id": self.file_resource["id"]}
         	# Determine whether to handle the data with shapefile or datastored csv operators
@@ -70,13 +71,19 @@ class Layer(object):
 				# The resource cannot be spatialized
                 raise Exception(toolkit._("Only CSV and Shapefile data can be spatialized"))
         else:
-            cls = MultiDatastored
-            kwargs = {
-                "package_id": self.package_id,
-                "lat_field": lat_field,
-                "lng_field": lng_field,
-                "join_key": self.join_key
-                }
+            kwargs = {"package_id": self.package_id}
+            if resource_id == 'resource_descriptor_multi':
+                cls = MultiDatastored
+                kwargs.update({
+                    "lat_field": lat_field,
+                    "lng_field": lng_field,
+                    "join_key": self.join_key
+                    })
+            elif resource_id == 'shapefile_multi':
+                cls = MultiShapeFile
+            else:
+                # The resource cannot be spatialized
+                raise Exception(toolkit._("Can not spatialize package."))
 
         # '**' unpacks the kwargs dictionary which can contain an arbitrary number of arguments
         self.data = cls(**kwargs)
@@ -101,8 +108,10 @@ class Layer(object):
         """
 
         ready = self.remove_layer()
-        if (ready):
+        if ready:
             ready = self.remove_geo_resources()
+            if ready:
+                ready = self.data.unpublish()
 
         return ready
 
@@ -131,7 +140,7 @@ class Layer(object):
                 "featuretypes"
             ])
 
-            if self.resource_id == 'resource_descriptor_multi':
+            if self.resource_id == 'resource_descriptor_multi' or self.resource_id == 'shapefile_multi':
                 description = self.file_resource["notes"]
             else:
                 description = self.file_resource["description"]
@@ -258,7 +267,7 @@ class Layer(object):
         return True
 
     def getName(self):
-        if self.resource_id == 'resource_descriptor_multi':
+        if self.resource_id == 'resource_descriptor_multi' or self.resource_id == 'shapefile_multi' :
             return "_" + re.sub('-','_', self.package_id)
         else:
             return "_" + re.sub('-','_', self.name)

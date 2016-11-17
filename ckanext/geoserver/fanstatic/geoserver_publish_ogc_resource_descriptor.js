@@ -19,8 +19,6 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
           if (res[i].key == "published")
             obj.published = JSON.parse(res[i].value);
         }
-        console.log(obj.extras);
-        console.log(obj.resource_descriptor);
         if (obj.resource_descriptor.schema_descriptor_version == 0.3) {
           for (var i = 0; i < obj.resource_descriptor.members.length; i++){
             if (obj.resource_descriptor.members[i].resource_type == "observations_with_geometry") {
@@ -82,7 +80,6 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postPublishOGC($(this), function(res){
-            console.log(res);
             obj.updatePublishInfo(obj.options.package);
             // add tag that the resource has been published
 
@@ -159,7 +156,6 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postPublishOGC($(this), function(res){
-            console.log(res);
             obj.updatePublishInfo(obj.options.package);
             // add tag that the resource has been published
           });
@@ -188,7 +184,6 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postUnpublishOGC($(this), function(res){
-            console.log(res);
             obj.updatePublishInfo(obj.options.package);
             // add tag that the resource has been published
             document.location.reload(true);
@@ -218,7 +213,6 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postUnpublishOGC($(this), function(res){
-            console.log(res);
             obj.updatePublishInfo(obj.options.package);
             // add tag that the resource has been published
             document.location.reload(true);
@@ -231,7 +225,7 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
     },
     postPublishOGC: function(form, callback) {
       var data, path;
-      $('.modal-body .alert').html('Loading ...').addClass('alert-info').css({
+      $('.modal-body .alert').html('Please wait while processing the request ...').addClass('alert-info').css({
         'display': 'block'
       });
       path = '/geoserver/publish-ogc';
@@ -258,7 +252,7 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
     },
     postUnpublishOGC: function(form, callback) {
       var data, path;
-      $('.modal-body .alert').html('Loading ...').addClass('alert-info').css({
+      $('.modal-body .alert').html('Please wait while processing the request ... ...').addClass('alert-info').css({
         'display': 'block'
       });
       path = '/geoserver/unpublish-ogc';
@@ -368,11 +362,8 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
         data: data,
         success: function(response) {
           document.location.reload(true);
-          console.log(response);
         },
         error:  function(response){
-          console.error(response);
-
         }
       });
     }

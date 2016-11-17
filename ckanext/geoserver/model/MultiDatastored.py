@@ -89,6 +89,16 @@ class MultiDatastored(object):
             else:
                 pass
 
+    def unpublish(self):
+        conn_params = {'connection_url': self.connection_url, 'package_id': self.package_id}
+        engine = db._get_engine(conn_params)
+        connection = engine.connect()
+        sql = "DROP MATERIALIZED VIEW IF EXISTS " + self.getName()
+        trans = connection.begin()
+        connection.execute(sql)
+        trans.commit()
+        connection.close()
+        return True
 
     def publish(self):
         """
@@ -224,9 +234,9 @@ class MultiDatastored(object):
         selectsql += "ON public.\""+geom[0]+"\".\""+geom_key+"\" = observations.\""+obs_key+"\""
 
         log.info("multiDatastored_publish.7")
-        sql = "DROP MATERIALIZED VIEW IF EXISTS \"_%s\"; CREATE MATERIALIZED VIEW \"_%s\" AS " + selectsql
+        sql = "DROP MATERIALIZED VIEW IF EXISTS \"%s\"; CREATE MATERIALIZED VIEW \"%s\" AS " + selectsql
         # sql = "DROP VIEW IF EXISTS \"_%s\"; CREATE VIEW \"_%s\" AS " + selectsql
-        sql = sql % (re.sub('-','_', self.package_id), re.sub('-','_', self.package_id))
+        sql = sql % (self.getName(), self.getName())
         log.info(sql)
         trans = connection.begin()
         log.info("multiDatastored_publish.7.1")
@@ -240,3 +250,7 @@ class MultiDatastored(object):
 
     def table_name(self):
         return self.resource_id
+
+    def getName(self):
+        log.info("getName.1")
+        return "_" + re.sub('-','_', self.package_id)

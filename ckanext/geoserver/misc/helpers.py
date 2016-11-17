@@ -5,6 +5,8 @@ from ckan.plugins import toolkit
 from ckan.logic import NotFound
 from ckan.controllers import storage
 from pylons import config
+from os import path
+from os import makedirs
 import shutil
 
 def check_published(resource):
@@ -51,6 +53,31 @@ def file_path_from_url_shp(url):
 
     return tmpFolder+label
 
+def folder_path_from_package_shp(package_id):
+    """
+    Given a file's URL, find the file itself on this system
+    """
+    required = [".shp", ".shx", ".dbf"]
+    optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
+    valid_endings = required+optional
+    tmpFolder = "/var/tmp/"+package_id+"/"
+    if not path.exists(tmpFolder):
+        makedirs(tmpFolder)
+
+    for resource in toolkit.get_action("package_show")(None, {"id": package_id}).get('resources', []):
+        url = resource.get("url", {})
+        # copy only valid (additional) shapfile
+        if path.splitext(resource.get("url", {}))[1] in valid_endings:
+            continue
+        pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
+        label = url.rsplit('/', 1)[-1]
+        tmpFile = urllib2.urlopen(url)
+        with open(tmpFolder+label, 'wb') as fp:
+            shutil.copyfileobj(tmpFile, fp)
+
+
+    return tmpFolder
+
 def get_url_for_file(label):
     """
     Returns the URL for a file given it's label.
@@ -70,3 +97,23 @@ def check_resource_descriptor_only():
         else:
             return False
     return None
+
+def shapefile_publishing_requirements_fulfiled(package_id):
+    '''
+    Ckeck if the given package fulfils the minimum needs to publish the shapefile. This is a check on the existence of the mandatory file extensions .shp, .shx, .dbf
+    '''
+    required = [".shp", ".shx", ".dbf"]
+    optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
+    valid_endings = required+optional
+
+    extensions = []
+    for resource in toolkit.get_action("package_show")(None, {"id": package_id}).get('resources', []):
+        if not path.splitext(resource.get("url", {}))[1] in valid_endings:
+            continue
+        extensions.append(path.splitext(resource.get("url", {}))[1])
+
+    # Check that all the required extensions are there
+    if len([ext for ext in required if ext in extensions]) == len(required):
+        # Check that there are not extension in there that are not required
+        if len([ext for ext in extensions if ext in optional]) == len(extensions) - len(required):
+            return True
