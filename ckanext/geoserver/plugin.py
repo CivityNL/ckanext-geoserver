@@ -41,7 +41,7 @@ class GeoserverPlugin(p.SingletonPlugin):
         return {
             'geoserver_publish_ogc': action.publish_ogc,
             'geoserver_unpublish_ogc': action.unpublish_ogc,
-            'geoserver_get_wms': action.map_search_wms,
+            'geoserver_get_wms': action.map_search_wms
         }
 
     def _modify_package_schema(self, schema):

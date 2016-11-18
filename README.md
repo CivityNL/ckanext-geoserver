@@ -120,3 +120,42 @@ Restart the Apache
 ```
 sudo service apache2 restart 
 ```
+## API extension
+
+The action API of CKAN is extended with new endpoints:
+
+* `/api/3/action/geoserver_publish_ogc` to publish a package
+* `/api/3/action/geoserver_unpublish_ogc` to unpublish a package
+
+Example in python:
+
+```python
+import urllib2
+import urllib
+import json
+
+request = urllib2.Request('http://YOUT_SERVER/api/3/action/geoserver_publish_ogc')
+```
+
+To use this endpoints you have to create a dictionary and provide your API key in an HTTP request. So include it in an Authorization header like in this python code:
+
+```python
+request.add_header('Authorization', 'YOUR KEY')
+```
+
+The dictionary has to have information about the package which should be published or unpublished [mandatory] and can have information about the keys which should be used when a join over different tables (->resource descriptor) is neccesary. 
+
+Example in python:
+
+```python
+dataset_dict = {
+	'package_id': 'ID_OF_PACKAGE', # the id of the package for update
+	'join_key': 'KEY_FOR_JOIN' # the key if database table joins are neccesary
+}
+```
+
+The response of this request should claim that everything worked and the package has been published / unpublished
+
+```python
+response = urllib2.urlopen(request, data_string)
+``` 

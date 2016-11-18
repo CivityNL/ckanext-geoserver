@@ -117,3 +117,28 @@ def shapefile_publishing_requirements_fulfiled(package_id):
         # Check that there are not extension in there that are not required
         if len([ext for ext in extensions if ext in optional]) == len(extensions) - len(required):
             return True
+
+def update_package_published_status(package_id, status):
+    '''
+    Updates ths published status for a given package_id
+    status:
+        True -> set published status to true
+        False -> set published status to false
+    '''
+
+    pkg = toolkit.get_action('package_show')(None, {'id': package_id})
+    extras = pkg.get('extras', [])
+    for extra in extras:
+        key = extra.get('key', None)
+        if key == 'published':
+            extras.remove(extra)
+
+    if status:
+        new_dict = {u'key': u'published', u'value': u'true'}
+    else:
+        new_dict = {u'key': u'published', u'value': u'false'}
+    extras.insert(0,new_dict)
+
+    toolkit.get_action('package_patch')(None, {'id': package_id, 'extras':extras})
+
+    return True

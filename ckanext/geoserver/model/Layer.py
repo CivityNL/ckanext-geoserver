@@ -41,7 +41,6 @@ class Layer(object):
 
     # Define properties of the object instance which will be passed into the class method
     def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
-        log.info("layer.0")
         self.geoserver = Geoserver.from_ckan_config()
         self.name = layer_name
         self.layer_version = layer_version
