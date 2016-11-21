@@ -1,5 +1,5 @@
 'use strict';
-ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
+ckan.module('geoserver_publish_ogc_schema_descriptor', function($, _) {
   return {
     initialize: function() {
       var form, res, obj;
@@ -14,30 +14,30 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       obj.getExtras(obj.options.package, function(res) {
         obj.extras = res;
         for (var i = 0, emp; i < res.length; i++) {
-          if (res[i].key == "resource_descriptor")
-            obj.resource_descriptor = JSON.parse(res[i].value);
+          if (res[i].key == obj.options.descriptorname)
+          obj.schema_descriptor = JSON.parse(res[i].value);
           if (res[i].key == "published")
             obj.published = JSON.parse(res[i].value);
         }
-        if (obj.resource_descriptor.schema_descriptor_version == 0.3) {
-          for (var i = 0; i < obj.resource_descriptor.members.length; i++){
-            if (obj.resource_descriptor.members[i].resource_type == "observations_with_geometry") {
+        if (obj.schema_descriptor.schema_descriptor_version == 0.3) {
+          for (var i = 0; i < obj.schema_descriptor.members.length; i++){
+            if (obj.schema_descriptor.members[i].resource_type == "observations_with_geometry") {
               obj.options.selected = i;
               if (obj.published) {
-                obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_resource_descriptor.html', obj.options, obj._onReceiveUnpublishSnippetSingle);
+                obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_schema_descriptor.html', obj.options, obj._onReceiveUnpublishSnippetSingle);
                 return true;
               } else {
-                obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_resource_descriptor_single.html', obj.options, obj._onReceivePublishSnippetSingle);
+                obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_schema_descriptor_single.html', obj.options, obj._onReceivePublishSnippetSingle);
                 return true;
               }
               break;
               // else either observations or observed_geometries
-            } else if (obj.resource_descriptor.members[i].resource_type == "observations" || obj.resource_descriptor.members[i].resource_type == "observed_geometries")
+            } else if (obj.schema_descriptor.members[i].resource_type == "observations" || obj.schema_descriptor.members[i].resource_type == "observed_geometries")
             if (obj.published) {
-              obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_resource_descriptor.html', obj.options, obj._onReceiveUnpublishSnippetMulti);
+              obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_schema_descriptor.html', obj.options, obj._onReceiveUnpublishSnippetMulti);
               return true;
             } else {
-              obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_resource_descriptor_multi.html', obj.options, obj._onReceivePublishSnippetMulti);
+              obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_schema_descriptor_multi.html', obj.options, obj._onReceivePublishSnippetMulti);
               return true;
             }
             break;
@@ -57,9 +57,9 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       // selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
       latfield = $('body').find('#geoserver_lat_field');
       lngfield = $('body').find('#geoserver_lng_field');
-      resourceInput = $('body').find('#resource_id').val(obj.resource_descriptor.members[obj.options.selected].resource_name[0]);
+      resourceInput = $('body').find('#resource_id').val(obj.schema_descriptor.members[obj.options.selected].resource_name[0]);
       packageInput = $('body').find('#package_id').val(obj.options.package);
-      possibleFields = obj.resource_descriptor.members[obj.options.selected].fields;
+      possibleFields = obj.schema_descriptor.members[obj.options.selected].fields;
       for (var i = 0; i < possibleFields.length; i++) {
         if (possibleFields[i].field_role == "latitude") {
           latfield.append($('<option>', {
@@ -100,27 +100,27 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       $('body').append(html);
       // selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
       joinkey = $('body').find('#join_key');
-      resourceInput = $('body').find('#resource_id').val("resource_descriptor_multi");
+      resourceInput = $('body').find('#resource_id').val("schema_descriptor_multi");
       packageInput = $('body').find('#package_id').val(obj.options.package);
       var observed_geometries_fields = [];
       var observations_fields = [];
       var obs_found = false;
       var geom_found = false;
       var geometries_candidate;
-      for (var i = 0; i < obj.resource_descriptor.members.length; i++){
+      for (var i = 0; i < obj.schema_descriptor.members.length; i++){
         if (obs_found && geom_found)
         continue;
-        if (obj.resource_descriptor.members[i].resource_type == "observations") {
+        if (obj.schema_descriptor.members[i].resource_type == "observations") {
           obs_found = true;
-          for (var j = 0; j < obj.resource_descriptor.members[i].fields.length; j++) {
-            observations_fields.push(obj.resource_descriptor.members[i].fields[j].field_id);
+          for (var j = 0; j < obj.schema_descriptor.members[i].fields.length; j++) {
+            observations_fields.push(obj.schema_descriptor.members[i].fields[j].field_id);
           }
         }
-        if (obj.resource_descriptor.members[i].resource_type == "observed_geometries") {
+        if (obj.schema_descriptor.members[i].resource_type == "observed_geometries") {
           geom_found = true;
           geometries_candidate = i;
-          for (var j = 0; j < obj.resource_descriptor.members[i].fields.length; j++) {
-            observed_geometries_fields.push(obj.resource_descriptor.members[i].fields[j].field_id);
+          for (var j = 0; j < obj.schema_descriptor.members[i].fields.length; j++) {
+            observed_geometries_fields.push(obj.schema_descriptor.members[i].fields[j].field_id);
           }
         }
       }
@@ -135,7 +135,7 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       }
       latfield = $('body').find('#geoserver_lat_field');
       lngfield = $('body').find('#geoserver_lng_field');
-      possibleFields = obj.resource_descriptor.members[geometries_candidate].fields;
+      possibleFields = obj.schema_descriptor.members[geometries_candidate].fields;
       for (var i = 0; i < possibleFields.length; i++) {
         if (possibleFields[i].field_role == "latitude") {
           latfield.append($('<option>', {
@@ -174,7 +174,7 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       //append new modal into body
       $('body').append(html);
       // selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
-      resourceInput = $('body').find('#resource_id').val(obj.resource_descriptor.members[obj.options.selected].resource_name[0]);
+      resourceInput = $('body').find('#resource_id').val(obj.schema_descriptor.members[obj.options.selected].resource_name[0]);
       packageInput = $('body').find('#package_id').val(obj.options.package);
       //show modal
       $('#publish_ogc_modal').modal('show');
@@ -203,7 +203,7 @@ ckan.module('geoserver_publish_ogc_resource_descriptor', function($, _) {
       //append new modal into body
       $('body').append(html);
       // selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
-      resourceInput = $('body').find('#resource_id').val("resource_descriptor_multi");
+      resourceInput = $('body').find('#resource_id').val("schema_descriptor_multi");
       packageInput = $('body').find('#package_id').val(obj.options.package);
       //show modal
       $('#publish_ogc_modal').modal('show');

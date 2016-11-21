@@ -20,8 +20,13 @@ ckan.module('geoserver_publish_ogc_shp', function($, _) {
 					}
 				}
 				if (obj.options.resource){
-					obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_shp_single.html', obj.options, obj._onReceivePublishSnippetSingle);
-					return true;
+					if (obj.published){
+						obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_shp.html', obj.options, obj._onReceiveUnpublishSnippetSingle);
+						return true;
+					} else {
+						obj.sandbox.client.getTemplate('geoserver_publish_ogc_form_shp_single.html', obj.options, obj._onReceivePublishSnippetSingle);
+						return true;
+					}
 				} else {
 					if (obj.published){
 						obj.sandbox.client.getTemplate('geoserver_unpublish_ogc_form_shp.html', obj.options, obj._onReceiveUnpublishSnippetMulti);
@@ -87,6 +92,35 @@ ckan.module('geoserver_publish_ogc_shp', function($, _) {
 					obj.postPublishOGC($(this), function(res){
 						obj.updatePublishInfo(obj.options.package);
 						document.location.reload(true)
+					});
+					//prevent page from loading
+					// e.preventDefault();
+					return false;
+				});
+			});
+		},
+		_onReceiveUnpublishSnippetSingle: function(html) {
+			var obj, resourceInput, packageInput, ogcForm;
+			obj = this;
+			// fields = obj.fieldnames;
+			//Make sure removing old modal if exists
+			$('#publish_ogc_modal').remove();
+			//append new modal into body
+			$('body').append(html);
+			// selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
+			resourceInput = $('body').find('#resource_id').val(obj.options.resource);
+			packageInput = $('body').find('#package_id').val(obj.options.package);
+			//show modal
+			$('#publish_ogc_modal').modal('show');
+			$("#publish_ogc_modal").on('shown', function() {
+				ogcForm = $(this).find('form#publish-ogc-form');
+				//bind submit event to publish OGC
+				ogcForm.submit(function(e) {
+					//publish ogc
+					obj.postUnpublishOGC($(this), function(res){
+						obj.updatePublishInfo(obj.options.package);
+						// add tag that the resource has been published
+						document.location.reload(true);
 					});
 					//prevent page from loading
 					// e.preventDefault();
@@ -174,7 +208,7 @@ ckan.module('geoserver_publish_ogc_shp', function($, _) {
 		},
 		postUnpublishOGC: function(form, callback) {
 			var data, path;
-			$('.modal-body .alert').html('Please wait while processing the request ... ...').addClass('alert-info').css({
+			$('.modal-body .alert').html('Please wait while processing the request ...').addClass('alert-info').css({
 				'display': 'block'
 			});
 			path = '/geoserver/unpublish-ogc';

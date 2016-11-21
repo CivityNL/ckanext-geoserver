@@ -1,7 +1,7 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% set rd_only = h.geoserver_check_resource_descriptor_only() %}
+{% set rd_only = h.geoserver_check_schema_descriptor_only() %}
 {% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not rd_only %}
 <li>
   {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
@@ -19,14 +19,23 @@
 </li>
 {% endif %}
 {% if res.format.lower() == 'zip' and can_edit and not c.pkg_dict.private%}
-<li>
-  <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
-    <i class="icon-globe"></i>
-    {{ _('Publish OGC from SHP') }}
-  </a>
-</li>
+  {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
+  {% if published  == "true" %}
+  <li>
+    <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
+      <i class="icon-globe"></i>
+      {{ _('Unpublish OGC from SHP') }}
+    </a>
+  </li>
+  {% else %}
+  <li>
+    <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
+      <i class="icon-globe"></i>
+      {{ _('Publish OGC from SHP') }}
+    </a>
+  </li>
+  {% endif %}
 {% endif %}
-
 <li>
   <a href="{{ url }}">
     {% if res.can_be_previewed %}

@@ -86,17 +86,24 @@ def get_url_for_file(label):
     ofs = storage.get_ofs()
     return ofs.get_url(bucket, label).replace("file://", "")
 
-def check_resource_descriptor_only():
+def check_descriptor_only():
     '''
-    Return the config option "geoserver.resource_descriptor_only"
+    Return the config option "geoserver.descriptor_only"
     '''
-    rd_only = config.get('geoserver.resource_descriptor_only', 'default')
+    rd_only = config.get('geoserver.descriptor_only', 'true')
     if rd_only is not None:
         if rd_only == 'true':
             return True
         else:
             return False
     return None
+
+def get_descriptor_name():
+    '''
+    Return the config option "geoserver.descriptor_name"
+    '''
+    descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
+    return descriptor_name
 
 def shapefile_publishing_requirements_fulfiled(package_id):
     '''

@@ -34,7 +34,6 @@ class Geoserver(Catalog):
 
         @return: workspace instance
         """
-
         name = config.get("geoserver.workspace_name", "ckan")
 
         uri = config.get("geoserver.workspace_uri", "http://localhost/ckan")

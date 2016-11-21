@@ -19,6 +19,7 @@ class MultiDatastored(object):
     join_key = None
     geo_col = 'Shape'
     connection_url = None
+    descriptor_name = None
 
     def __init__(self, package_id, lat_field, lng_field, join_key):
         self.package_id = package_id
@@ -26,6 +27,7 @@ class MultiDatastored(object):
         self.lng_col = lng_field
         self.join_key = join_key
         self.connection_url = config.get('ckan.datastore.write_url')
+        self.descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
 
@@ -102,15 +104,15 @@ class MultiDatastored(object):
 
         for extra in extras:
             key = extra.get('key', None)
-            if key == 'resource_descriptor':
-                resource_descriptor = json.loads(extra.get('value'))
+            if key == self.descriptor_name:
+                schema_descriptor = json.loads(extra.get('value'))
                 break
 
 
         obs = []
         geom = []
 
-        for member in resource_descriptor.get("members"):
+        for member in schema_descriptor.get("members"):
             if member.get('resource_type') == 'observed_geometries':
                 geom_fields = member.get('fields')
                 for ids in member.get('resource_name'):

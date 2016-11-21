@@ -45,7 +45,7 @@ class Layer(object):
         self.name = layer_name
         self.layer_version = layer_version
         self.username = username
-        if resource_id == 'resource_descriptor_multi' or resource_id == 'shapefile_multi':
+        if resource_id == 'schema_descriptor_multi' or resource_id == 'shapefile_multi':
             self.file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
         else:
             self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
@@ -54,10 +54,11 @@ class Layer(object):
         self.store = self.geoserver.get_datastore(workspace, store, workspace_name, layer_version)
         self.workspace_name = workspace_name
         self.join_key = join_key
-        if resource_id != 'resource_descriptor_multi' and resource_id != 'shapefile_multi':
+
+        if resource_id != 'schema_descriptor_multi' and resource_id != 'shapefile_multi':
             url = self.file_resource["url"]
             kwargs = {"resource_id": self.file_resource["id"]}
-        	# Determine whether to handle the data with shapefile or datastored csv operators
+            # Determine whether to handle the data with shapefile or datastored csv operators
             if url.endswith('.zip'):
                 cls = Shapefile
             elif url.endswith('.csv'):
@@ -67,11 +68,11 @@ class Layer(object):
                     "lng_field": lng_field
                     })
             else:
-				# The resource cannot be spatialized
+                # The resource cannot be spatialized
                 raise Exception(toolkit._("Only CSV and Shapefile data can be spatialized"))
         else:
             kwargs = {"package_id": self.package_id}
-            if resource_id == 'resource_descriptor_multi':
+            if resource_id == 'schema_descriptor_multi':
                 cls = MultiDatastored
                 kwargs.update({
                     "lat_field": lat_field,
@@ -139,7 +140,7 @@ class Layer(object):
                 "featuretypes"
             ])
 
-            if self.resource_id == 'resource_descriptor_multi' or self.resource_id == 'shapefile_multi':
+            if self.resource_id == 'schema_descriptor_multi' or self.resource_id == 'shapefile_multi':
                 description = self.file_resource["notes"]
             else:
                 description = self.file_resource["description"]
@@ -266,7 +267,7 @@ class Layer(object):
         return True
 
     def getName(self):
-        if self.resource_id == 'resource_descriptor_multi' or self.resource_id == 'shapefile_multi' :
+        if self.resource_id == 'schema_descriptor_multi' or self.resource_id == 'shapefile_multi' :
             return "_" + re.sub('-','_', self.package_id)
         else:
             return "_" + re.sub('-','_', self.name)

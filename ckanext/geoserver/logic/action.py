@@ -6,6 +6,7 @@ from ckanext.geoserver.model.Layer import Layer
 from ckanext.geoserver.model.ProcessOGC import HandleWMS
 from ckan.plugins import toolkit
 from pylons.i18n import _
+from pylons import config
 import ckan.lib.helpers as h
 from ckan import model
 import socket
@@ -39,6 +40,8 @@ def publish_ogc(context, data_dict):
     workspace_name = data_dict.get("workspace_name", None)
     api_call_type = context.get("api_call_type", "ui")
 
+    descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
+
     # check if API call only contains id (can cointain package_id, join_key)
     isMulti = False
     if data_dict.get("package_id", None) is not None and len(data_dict) <= 2:
@@ -52,10 +55,10 @@ def publish_ogc(context, data_dict):
 
             for extra in extras:
                 key = extra.get('key', None)
-                if key == 'resource_descriptor':
-                    resource_descriptor = json.loads(extra.get('value'))
+                if key == descriptor_name:
+                    schema_descriptor = json.loads(extra.get('value'))
 
-            for member in resource_descriptor.get("members"):
+            for member in schema_descriptor.get("members"):
                 # if single
                 if member.get('resource_type') == 'observations_with_geometry':
                     resource_id = member.get('resource_name')[0]
@@ -69,9 +72,9 @@ def publish_ogc(context, data_dict):
                 # if multi get lat/lng from correct file
                 if member.get('resource_type') == 'observed_geometries':
                     isMulti = True
-                    resource_id = "resource_descriptor_multi"
-                    layer_name = "resource_descriptor_multi"
-                    workspace_name = "resource_descriptor_multi"
+                    resource_id = "schema_descriptor_multi"
+                    layer_name = "schema_descriptor_multi"
+                    workspace_name = "schema_descriptor_multi"
                     for field in member.get('fields'):
                         if field.get('field_role') == "latitude":
                             lat_field = field.get('field_id')
@@ -123,9 +126,6 @@ def publish_ogc(context, data_dict):
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to Geoserver."))
 
-        # Confirm that everything went according to plan
-
-
 def unpublish_ogc(context, data_dict):
     """
     Un-publishes the Geoserver layer based on the resource identifier. Retrieves the Geoserver layer name and package
@@ -142,6 +142,7 @@ def unpublish_ogc(context, data_dict):
     api_call_type = data_dict.get("api_call_type", "ui")
     package_id = data_dict.get("package_id", None)
 
+    descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
     # if api call
     if data_dict.get("package_id", None) is not None and len(data_dict) == 1:
         # if shapefile
@@ -154,20 +155,20 @@ def unpublish_ogc(context, data_dict):
 
             for extra in extras:
                 key = extra.get('key', None)
-                if key == 'resource_descriptor':
-                    resource_descriptor = json.loads(extra.get('value'))
+                if key == descriptor_name:
+                    schema_descriptor = json.loads(extra.get('value'))
 
-            for member in resource_descriptor.get("members"):
+            for member in schema_descriptor.get("members"):
                 # if single
                 if member.get('resource_type') == 'observations_with_geometry':
                     resource_id = member.get('resource_name')[0]
                     layer_name = member.get('resource_name')[0]
                 # if multi get lat/lng from correct file
                 if member.get('resource_type') == 'observed_geometries':
-                    resource_id = "resource_descriptor_multi"
-                    layer_name = "resource_descriptor_multi"
+                    resource_id = "schema_descriptor_multi"
+                    layer_name = "schema_descriptor_multi"
 
-    if resource_id == 'resource_descriptor_multi' or resource_id == 'shapefile_multi':
+    if resource_id == 'schema_descriptor_multi' or resource_id == 'shapefile_multi':
         file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
     else:
         file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
@@ -183,7 +184,6 @@ def unpublish_ogc(context, data_dict):
         log.debug("Error connecting to geoserver. Please contact the site administrator if this problem persists.")
         if api_call_type == 'ui':
             h.flash_error(_("Error connecting to geoserver. Please contact the site administrator if this problem persists."))
-
         return False
 
 

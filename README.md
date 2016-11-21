@@ -81,8 +81,9 @@ After installation completes, edit `/etc/ckan/default/production.ini` with the f
 geoserver.rest_url = https://geoserverLogin:geoserverPassword@Geoserver_adress_here/geoserver/rest
 geoserver.default_workspace = ckan
 geoserver.workspace_name = ckan
-geoserver.workspace_uri = http://localhost:5000/ckan #not crucial, can be anything
-geoserver.resource_descriptor_only = true #publish/unpublish options only based on existence of resource descriptor
+geoserver.workspace_uri = http://localhost:5000/ckan # not crucial, can be anything
+geoserver.descriptor_only = true # default: true -  publish/unpublish options only based on existence of resource 
+geoserver.descriptor_name = schema_descriptor # default: schema_descriptor - the name for the schema_descriptor
 ```
 
 Also requires this to be set (should already be set when following the earlier documentation):

@@ -4,7 +4,8 @@
 
 {{ super() }}
 
-{% set rd = h.get_pkg_dict_extra(c.pkg_dict, 'resource_descriptor', '') %}
+{% set rd = h.get_pkg_dict_extra(c.pkg_dict, 'schema_descriptor', '') %}
+{% set descriptor_name = h.geoserver_get_descriptor_name() %}
 {% set can_edit = h.check_access('package_update', {'id':pkg.id }) %}
 {% set shp_check = h.geoserver_shapefile_publishing_requirements_fulfiled(pkg.id) %}
 {% if rd and can_edit and not c.pkg_dict.private%}
@@ -13,12 +14,12 @@
 
       {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
       {% if published  == "true" %}
-      <a class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_resource_descriptor" data-module-package="{{ pkg.id }}">
+      <a class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_schema_descriptor" data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
         <i class="icon-globe"></i>
         {{ _('Unpublish OGC') }}
       </a>
       {% else %}
-      <a class="btn btn-success" href="#" data-module="geoserver_publish_ogc_resource_descriptor" data-module-package="{{ pkg.id }}">
+      <a class="btn btn-success" href="#" data-module="geoserver_publish_ogc_schema_descriptor" data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
         <i class="icon-globe"></i>
         {{ _('Publish OGC') }}
       </a>
