@@ -216,3 +216,20 @@ def map_search_wms(context, data_dict):
         return this_data
     except:
         return [{'ERROR':'SERVER_ERROR'}]
+
+def update_package_published_status(context, data_dict):
+
+    # check if the user is allowed to edit/publish this package
+    check_data_dict = {'id': data_dict.get("package_id", None)}
+    logic.check_access('package_update', context, check_data_dict)
+
+    package_id = data_dict.get("package_id", None)
+    if data_dict.get("status", None).lower() == "true":
+        status = True
+    else:
+        status = False
+
+    if helpers.update_package_published_status(package_id, status):
+        return {"success": True, "message": _("The published-status of this package has successfully been changed.")}
+    else:
+        return {"error": True, "message": _("While changing the published-status of this package an error occurred.")}

@@ -140,12 +140,18 @@ def update_package_published_status(package_id, status):
         if key == 'published':
             extras.remove(extra)
 
+    tags = pkg.get('tags')
+
     if status:
+        tags.append({'name':'published'})
         new_dict = {u'key': u'published', u'value': u'true'}
     else:
+        for tag in tags:
+            if tag['name'] == "published":
+                tags.remove(tag)
         new_dict = {u'key': u'published', u'value': u'false'}
     extras.insert(0,new_dict)
 
-    toolkit.get_action('package_patch')(None, {'id': package_id, 'extras':extras})
+    toolkit.get_action('package_patch')(None, {'id': package_id, 'extras':extras, 'tags': tags})
 
     return True

@@ -168,3 +168,21 @@ class OgcController(BaseController):
         except Exception, e:
             msg = 'An error ocurred: [%s]' % str(e)
             abort(500, msg)
+
+    @jsonify
+    def updatePackagePublishedStatus(self):
+        if request.method != 'POST' or not request.is_xhr:
+            return {'success': False, 'message': toolkit._("Bad request - JSON Error: No request body data")}
+
+        context = {'model': model, 'session': model.Session, 'user': c.user or c.author, 'auth_user_obj': c.userobj}
+        data = clean_dict(unflatten(tuplize_dict(parse_params(request.params))))
+
+        package_id = data.get("package_id", None)
+        status = data.get("status", None)
+        try:
+            result = toolkit.get_action('geoserver_update_package_published_status')(context, {'package_id': package_id, 'status': status})
+        except:
+            return {
+                'success': False,
+                'message': toolkit._("An error occured while processing your request, please contact your administrator.")
+            }

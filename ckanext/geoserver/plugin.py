@@ -31,6 +31,7 @@ class GeoserverPlugin(p.SingletonPlugin):
         map.connect('geoserver_publish_ogc', '/geoserver/publish-ogc', controller=controller, action='publishOGC')
         map.connect('geoserver_unpublish_ogc', '/geoserver/unpublish-ogc', controller=controller, action='unpublishOGC')
         map.connect('geoserver_ogc_get_capabilities', '/geoserver/get-ogc-services', controller=controller, action='getOGCServices')
+        map.connect('geoserver_update_package_published_status', '/geoserver/update-package-published-status', controller=controller, action='updatePackagePublishedStatus')
 
         return map
 
@@ -41,7 +42,8 @@ class GeoserverPlugin(p.SingletonPlugin):
         return {
             'geoserver_publish_ogc': action.publish_ogc,
             'geoserver_unpublish_ogc': action.unpublish_ogc,
-            'geoserver_get_wms': action.map_search_wms
+            'geoserver_get_wms': action.map_search_wms,
+            'geoserver_update_package_published_status': action.update_package_published_status
         }
 
     def _modify_package_schema(self, schema):

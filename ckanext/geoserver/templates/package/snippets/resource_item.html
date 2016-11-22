@@ -1,7 +1,7 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% set rd_only = h.geoserver_check_schema_descriptor_only() %}
+{% set rd_only = h.geoserver_check_descriptor_only() %}
 {% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not rd_only %}
 <li>
   {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}

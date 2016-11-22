@@ -61,10 +61,8 @@ ckan.module('geoserver_publish_ogc', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postPublishOGC($(this), function(res){
-            obj.updatePublishInfo(obj.options.package);
+            obj.updatePublishInfo(obj.options.package, true);
           });
-          //prevent page from loading
-          // e.preventDefault();
           return false;
         });
       });
@@ -72,12 +70,10 @@ ckan.module('geoserver_publish_ogc', function($, _) {
     _onReceiveUnpublishSnippet: function(html) {
       var obj, resourceInput, packageInput, ogcForm;
       obj = this;
-      // fields = obj.fieldnames;
       //Make sure removing old modal if exists
       $('#publish_ogc_modal').remove();
       //append new modal into body
       $('body').append(html);
-      // selects = $('body').find('#geoserver_lat_field, #geoserver_lng_field');
       resourceInput = $('body').find('#resource_id').val(obj.options.resource);
       packageInput = $('body').find('#package_id').val(obj.options.package);
       //show modal
@@ -88,12 +84,9 @@ ckan.module('geoserver_publish_ogc', function($, _) {
         ogcForm.submit(function(e) {
           //publish ogc
           obj.postUnpublishOGC($(this), function(res){
-            obj.updatePublishInfo(obj.options.package);
-            // add tag that the resource has been published
+            obj.updatePublishInfo(obj.options.package, false);
             document.location.reload(true);
           });
-          //prevent page from loading
-          // e.preventDefault();
           return false;
         });
       });
@@ -115,8 +108,6 @@ ckan.module('geoserver_publish_ogc', function($, _) {
           if (result.success) {
             //Success
             $('.modal-body .alert').addClass('alert-success');
-            //reload the page
-            // location.reload();
             callback(result);
           } else {
             //error
@@ -142,8 +133,6 @@ ckan.module('geoserver_publish_ogc', function($, _) {
           if (result.success) {
             //Success
             $('.modal-body .alert').addClass('alert-success');
-            //reload the page
-            // location.reload();
             callback(result)
           } else {
             //error
@@ -201,35 +190,15 @@ ckan.module('geoserver_publish_ogc', function($, _) {
       }
       return fields;
     },
-    updatePublishInfo: function(id) {
+    updatePublishInfo: function(id, status) {
       var path, type, dataType, data, obj;
       obj = this;
-      path = '/api/action/package_patch';
+      path = '/geoserver/update-package-published-status';
       type = 'POST';
       dataType = 'JSON';
-      var extras = obj.extras;
-      var found = false;
-      for (var i = 0; i < extras.length; i++){
-        if (extras[i].key == "published"){
-          found = true;
-          if (extras[i].value == "true") {
-            extras[i].value = "false";
-          } else {
-            extras[i].value = "true";
-          }
-          break;
-        }
-      }
-      if (!found){
-        extras.push({
-          key:   "published",
-          value: true
-        });
-      }
-      data = JSON.stringify({
-        'id': id,
-        'extras': extras
-      });
+      data = [];
+      data.push({'name':'package_id', 'value':id});
+      data.push({'name':'status', 'value':status});
       $.ajax({
         url: path,
         type: type,
