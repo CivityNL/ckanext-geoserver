@@ -67,7 +67,7 @@ def folder_path_from_package_shp(package_id):
     for resource in toolkit.get_action("package_show")(None, {"id": package_id}).get('resources', []):
         url = resource.get("url", {})
         # copy only valid (additional) shapfile
-        if path.splitext(resource.get("url", {}))[1] in valid_endings:
+        if not path.splitext(resource.get("url", {}))[1] in valid_endings:
             continue
         pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
         label = url.rsplit('/', 1)[-1]
