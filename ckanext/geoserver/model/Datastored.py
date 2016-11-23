@@ -3,9 +3,10 @@ from pylons import config
 import ckanext.datastore.db as db
 from ckan.plugins import toolkit
 from sqlalchemy.exc import ProgrammingError
-import logging
+
 import re
-log = logging.getLogger(__name__)
+import json
+
 
 class Datastored(object):
     """
@@ -17,12 +18,16 @@ class Datastored(object):
     lng_col = None
     geo_col = 'Shape'
     connection_url = None
+    package_id = None
 
     def __init__(self, resource_id, lat_field, lng_field):
         self.resource_id = resource_id
         self.lat_col = lat_field
         self.lng_col = lng_field
         self.connection_url = config.get('ckan.datastore.write_url')
+        self.descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
+        resource = toolkit.get_action('resource_show')(None, {'id': self.resource_id})
+        self.package_id = resource.get('package_id', None)
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
 
@@ -34,11 +39,7 @@ class Datastored(object):
         """
         for item in field_list:
             dirty = item['id']
-            clean = re.sub('µ','micro_', dirty)
-            clean = re.sub('/','_per_', clean)
-            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', '_', clean)
-            if re.match('^[0-9]', clean):
-                clean = "_"+clean
+            clean = self.clean_name(dirty, '_')
 
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
@@ -55,11 +56,7 @@ class Datastored(object):
     def dirty_fields(self, connection, field_list):
         for item in field_list:
             dirty = item['id']
-            clean = re.sub('µ','micro_', dirty)
-            clean = re.sub('/','_per_', clean)
-            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', ' ', clean)
-            if re.match('^[0-9]', clean):
-                clean = "_"+clean
+            clean = self.clean_name(dirty, ' ')
 
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
@@ -123,13 +120,62 @@ class Datastored(object):
             connection.execute(sql)
             trans.commit()
 
-        sql = "DROP MATERIALIZED VIEW IF EXISTS \"_%s\"; CREATE MATERIALIZED VIEW \"_%s\" AS SELECT * FROM \"%s\""
-        sql = sql % (re.sub('-','_', self.resource_id), re.sub('-','_', self.resource_id), self.resource_id)
+        pkg = toolkit.get_action('package_show')(None, {'id': self.package_id})
+        extras = pkg.get('extras', [])
+
+        for extra in extras:
+            key = extra.get('key', None)
+            if key == self.descriptor_name:
+                schema_descriptor = json.loads(extra.get('value'))
+                break
+
+        description = schema_descriptor.get("members")[0]
+        sql = "DROP MATERIALIZED VIEW IF EXISTS \""+self.view_name()+"\"; CREATE MATERIALIZED VIEW \""+self.view_name()+"\" AS SELECT "
+        for fields in description.get('fields'):
+            if fields.get('field_type').lower() == 'date':
+                if fields.get('date_format') is not None:
+                    postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
+                else:
+                    postgresdate = self.convertIsoToPostgres('default')
+                sql += "to_timestamp(CAST(\""+self.table_name()+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \""+self.clean_name(fields.get('field_id'),'_')+"\", "
+            else:
+                sql += "\""+self.table_name()+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as \""+self.clean_name(fields.get('field_id'),'_')+"\", "
+
+        sql += "\""+self.table_name()+"\".\""+self.geo_col+"\" as \""+self.geo_col+"\", "
+
+        sql = sql[:-2] + " "
+
+        sql += "FROM \""+self.table_name()+"\""
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()
         connection.close()
         return True
 
+    def convertIsoToPostgres(self, date):
+        if date == 'default':
+            return self.convertIsoToPostgres('YYYY-MM-ddTHH:mm:ssZ')
+        postgres = date
+        postgres = postgres.replace('T', '"T"')
+        postgres = postgres.replace('Z', '"Z"')
+        postgres = postgres.replace('mm', 'MI')
+        postgres = postgres.replace('dd', 'DD')
+        postgres = postgres.replace('hh', 'HH12')
+        postgres = postgres.replace('HH', 'HH24')
+        postgres = postgres.replace('SSS', 'MS')
+        postgres = postgres.replace('ss', 'SS')
+        return postgres
+
+    def view_name(self):
+        return "_"+re.sub('-','_', self.resource_id)
+
     def table_name(self):
         return self.resource_id
+
+    def clean_name(self, name, form):
+        clean = re.sub('µ','micro_', name)
+        clean = re.sub('/','_per_', clean)
+        clean = re.sub('[][}{()?$%&!#*^°@,;: ]', form, clean)
+        if re.match('^[0-9]', clean):
+            clean = "_"+clean
+        return clean

@@ -3,10 +3,10 @@ from pylons import config
 import ckanext.datastore.db as db
 from ckan.plugins import toolkit
 from sqlalchemy.exc import ProgrammingError
-import logging
+
 import re
 import json
-log = logging.getLogger(__name__)
+
 
 class MultiDatastored(object):
     """
@@ -39,12 +39,7 @@ class MultiDatastored(object):
         """
         for item in field_list:
             dirty = item['id']
-            #clean = dirty.replace(" ","_")
-            clean = re.sub('µ','micro_', dirty)
-            clean = re.sub('/','_per_', clean)
-            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', '_', clean)
-            if re.match('^[0-9]', clean):
-                clean = "_"+clean
+            clean = self.clean_name(dirty, '_')
 
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
@@ -62,12 +57,7 @@ class MultiDatastored(object):
     def dirty_fields(self, connection, field_list):
         for item in field_list:
             dirty = item['id']
-            #clean = dirty.replace(" ","_")
-            clean = re.sub('µ','micro_', dirty)
-            clean = re.sub('/','_per_', clean)
-            clean = re.sub('[][}{()?$%&!#*^°@,;: ]', ' ', clean)
-            if re.match('^[0-9]', clean):
-                clean = "_"+clean
+            clean = self.clean_name(dirty, ' ')
 
             if dirty != clean:
                 sql = 'ALTER TABLE "{res_id}" RENAME COLUMN "{old_val}" TO "{new_val}"'.format(
@@ -166,16 +156,30 @@ class MultiDatastored(object):
         selectsql = "SELECT "
 
         for fields in geom_fields:
-            selectsql += "\""+geom[0]+"\".\""+fields.get('field_id')+"\" as \"geometry."+fields.get('field_id')+"\", "
-            if fields.get('field_id').lower() == self.join_key:
-                geom_key = fields.get('field_id')
+            if fields.get('field_type').lower() == 'date':
+                if fields.get('date_format') is not None:
+                    postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
+                else:
+                    postgresdate = self.convertIsoToPostgres('default')
+                selectsql += "to_timestamp(CAST(\""+geom[0]+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+            else:
+                selectsql += "\""+geom[0]+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                if fields.get('field_id').lower() == self.join_key:
+                    geom_key = fields.get('field_id')
 
         selectsql += "\""+geom[0]+"\".\""+self.geo_col+"\" as \"geometry."+self.geo_col+"\", "
 
         for fields in obs_fields:
-            selectsql += "observations.\"" + fields.get('field_id') + "\" as \"observations."+fields.get('field_id')+"\", "
-            if fields.get('field_id').lower() == self.join_key:
-                obs_key = fields.get('field_id')
+            if fields.get('field_type').lower() == 'date':
+                if fields.get('date_format') is not None:
+                    postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
+                else:
+                    postgresdate = self.convertIsoToPostgres('default')
+                selectsql += "to_timestamp(CAST(observations.\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+            else:
+                selectsql += "observations.\"" + self.clean_name(fields.get('field_id'),'_') + "\" as \"observations."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                if fields.get('field_id').lower() == self.join_key:
+                    obs_key = fields.get('field_id')
 
         selectsql = selectsql[:-2] + " "
         selectsql += "FROM "
@@ -198,6 +202,28 @@ class MultiDatastored(object):
 
         connection.close()
         return True
+
+    def convertIsoToPostgres(self, date):
+        if date == 'default':
+            return self.convertIsoToPostgres('YYYY-MM-ddTHH:mm:ssZ')
+        postgres = date
+        postgres = postgres.replace('T', '"T"')
+        postgres = postgres.replace('Z', '"Z"')
+        postgres = postgres.replace('mm', 'MI')
+        postgres = postgres.replace('dd', 'DD')
+        postgres = postgres.replace('hh', 'HH12')
+        postgres = postgres.replace('HH', 'HH24')
+        postgres = postgres.replace('SSS', 'MS')
+        postgres = postgres.replace('ss', 'SS')
+        return postgres
+
+    def clean_name(self, name, form):
+        clean = re.sub('µ','micro_', name)
+        clean = re.sub('/','_per_', clean)
+        clean = re.sub('[][}{()?$%&!#*^°@,;: ]', form, clean)
+        if re.match('^[0-9]', clean):
+            clean = "_"+clean
+        return clean
 
     def table_name(self):
         return self.resource_id

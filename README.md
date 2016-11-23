@@ -6,8 +6,8 @@
 The installation of GDAL is necessary, because gdal has shared libraries and the virtual env prevents python from seeing them. Use this set of commands:
 
 ```
-sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable 
-sudo apt-get update 
+sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+sudo apt-get update
 sudo apt-get install libgdal-dev
 sudo apt-get build-dep python-imaging
 pip install --upgrade pip
@@ -25,7 +25,7 @@ It is mandatory to have the PostGIS extension installed and activated on the dat
 # install PostGIS
 sudo apt-get update
 sudo apt-get install postgis
-# login as superuser in postgres 
+# login as superuser in postgres
 su - postgres
 # connect to the datastore database
 psql datastore_default
@@ -34,15 +34,14 @@ datastore_default=# CREATE EXTENSION postgis;
 ```
 
 ###### (optional) Install SSL compatible Python Version
-If your Server does have SSL enabled and if you are working on an Ubuntu 14.04 LTS or prior system: by default version 2.7.6 of Python is installed. Due to SSL fixes ist is mandatory to update to a version 2.7.9+. Check which version is installed: 
+If your Server does have SSL enabled and if you are working on an Ubuntu 14.04 LTS or prior system: by default version 2.7.6 of Python is installed. Due to SSL fixes ist is mandatory to update to a version 2.7.9+. Check which version is installed:
 
-```
-python 
+```python
 
-> Python 2.7.6 (default, Jun 22 2015, 17:58:13) 
+> Python 2.7.6 (default, Jun 22 2015, 17:58:13)
 > [GCC 4.8.2] on linux2
 > Type "help", "copyright", "credits" or "license" for more information.
-> >>> 
+> >>>
 
 ```
 
@@ -63,7 +62,7 @@ pip install --upgrade ndg-httpsclient
 
 ### Installation
 
-After that install the Geoserver extension. We use the forked extension from original https://github.com/ngds/ckanext-geoserver,  as fixed some bugs and decoupled it from other ngds requirements.   
+After that install the Geoserver extension. We use the forked extension from original https://github.com/ngds/ckanext-geoserver, fixed some bugs and decoupled it from other ngds requirements.
 
 ```
 cd /usr/lib/ckan/default/src/ckan
@@ -108,7 +107,7 @@ ckan.plugins = ... geoserver
 
 > **Note:**
 > Datapusher has to be activated in CKAN config file:
-> 
+>
 > ```
 > ckan.plugins = datapusher ...
 > ckan.datapusher.url = http://127.0.0.1:8800/
@@ -124,7 +123,7 @@ python setup.py develop
 Restart the Apache
 
 ```
-sudo service apache2 restart 
+sudo service apache2 restart
 ```
 ## API extension
 
@@ -149,7 +148,7 @@ To use this endpoints you have to create a dictionary and provide your API key i
 request.add_header('Authorization', 'YOUR KEY')
 ```
 
-The dictionary has to have information about the package which should be published or unpublished [mandatory] and can have information about the keys which should be used when a join over different tables (->resource descriptor) is neccesary. 
+The dictionary has to have information about the package which should be published or unpublished [mandatory] and can have information about the keys which should be used when a join over different tables (->resource descriptor) is neccesary.
 
 Example in python:
 
@@ -164,4 +163,4 @@ The response of this request should claim that everything worked and the package
 
 ```python
 response = urllib2.urlopen(request, data_string)
-``` 
+```
