@@ -37,12 +37,10 @@ datastore_default=# CREATE EXTENSION postgis;
 If your Server does have SSL enabled and if you are working on an Ubuntu 14.04 LTS or prior system: by default version 2.7.6 of Python is installed. Due to SSL fixes ist is mandatory to update to a version 2.7.9+. Check which version is installed:
 
 ```python
-
 > Python 2.7.6 (default, Jun 22 2015, 17:58:13)
 > [GCC 4.8.2] on linux2
 > Type "help", "copyright", "credits" or "license" for more information.
 > >>>
-
 ```
 
 If it is prior 2.7.9 you have to update to a newer version:
@@ -76,7 +74,7 @@ pip install -r requirements.txt
 
 After installation completes, edit `/etc/ckan/default/production.ini` with the following custom configurations:
 
-```config
+```ini
 geoserver.rest_url = https://geoserverLogin:geoserverPassword@Geoserver_adress_here/geoserver/rest
 geoserver.default_workspace = ckan
 geoserver.workspace_name = ckan
@@ -92,7 +90,7 @@ ckan.extra_resource_fields = parent_resource
 
 Also requires this to be set (should already be set when following the earlier documentation):
 
-```config
+```ini
 ckan.datastore.write_url = 'postgresql://ckanuser:pass@localhost/datastore'
 ```
 
@@ -101,14 +99,14 @@ ckan.datastore.write_url = 'postgresql://ckanuser:pass@localhost/datastore'
 
 Add the plugin in `/etc/ckan/default/production.ini`:
 
-```config
+```ini
 ckan.plugins = ... geoserver
 ```
 
 > **Note:**
 > Datapusher has to be activated in CKAN config file:
 >
-> ```
+> ```ini
 > ckan.plugins = datapusher ...
 > ckan.datapusher.url = http://127.0.0.1:8800/
 > ```
