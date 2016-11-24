@@ -5,7 +5,7 @@
 ###### Install GDAL
 The installation of GDAL is necessary, because gdal has shared libraries and the virtual env prevents python from seeing them. Use this set of commands:
 
-```
+```bash
 sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
 sudo apt-get install libgdal-dev
@@ -21,7 +21,7 @@ pip install GDAL==1.10.0
 ###### Install PostGIS for datastore database
 It is mandatory to have the PostGIS extension installed and activated on the datastore database. For example, if you are working on an Ubuntu machine:
 
-```
+```bash
 # install PostGIS
 sudo apt-get update
 sudo apt-get install postgis
@@ -47,7 +47,7 @@ If your Server does have SSL enabled and if you are working on an Ubuntu 14.04 L
 
 If it is prior 2.7.9 you have to update to a newer version:
 
-```
+```bash
 sudo apt-add-repository ppa:fkrull/deadsnakes-python2.7
 sudo apt-get update
 sudo apt-get install python2.7 python2.7-dev
@@ -55,7 +55,7 @@ sudo apt-get install python2.7 python2.7-dev
 
 Additionally,  follow the instructions here [https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning](https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning) and update the ndg-httpsclient to a newer version which can handle https requests:
 
-```
+```bash
 pip install --upgrade ndg-httpsclient
 ```
 
@@ -64,7 +64,7 @@ pip install --upgrade ndg-httpsclient
 
 After that install the Geoserver extension. We use the forked extension from original https://github.com/ngds/ckanext-geoserver, fixed some bugs and decoupled it from other ngds requirements.
 
-```
+```bash
 cd /usr/lib/ckan/default/src/ckan
 . /usr/lib/ckan/default/bin/activate
 
@@ -76,7 +76,7 @@ pip install -r requirements.txt
 
 After installation completes, edit `/etc/ckan/default/production.ini` with the following custom configurations:
 
-```
+```config
 geoserver.rest_url = https://geoserverLogin:geoserverPassword@Geoserver_adress_here/geoserver/rest
 geoserver.default_workspace = ckan
 geoserver.workspace_name = ckan
@@ -92,7 +92,7 @@ ckan.extra_resource_fields = parent_resource
 
 Also requires this to be set (should already be set when following the earlier documentation):
 
-```
+```config
 ckan.datastore.write_url = 'postgresql://ckanuser:pass@localhost/datastore'
 ```
 
@@ -101,7 +101,7 @@ ckan.datastore.write_url = 'postgresql://ckanuser:pass@localhost/datastore'
 
 Add the plugin in `/etc/ckan/default/production.ini`:
 
-```
+```config
 ckan.plugins = ... geoserver
 ```
 
@@ -115,14 +115,14 @@ ckan.plugins = ... geoserver
 
 Activate the plugin on the server:
 
-```
+```bash
 cd /usr/lib/ckan/default/src/ckanext-geoserver
 python setup.py develop
 ```
 
 Restart the Apache
 
-```
+```bash
 sudo service apache2 restart
 ```
 ## API extension
@@ -162,5 +162,6 @@ dataset_dict = {
 The response of this request should claim that everything worked and the package has been published / unpublished
 
 ```python
+data_string = urllib.quote(json.dumps(dataset_dict))
 response = urllib2.urlopen(request, data_string)
 ```
