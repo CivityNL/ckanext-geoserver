@@ -2,7 +2,7 @@
 
 ### Prerequisites
 
-###### Install GDAL
+##### Install GDAL
 The installation of GDAL is necessary, because gdal has shared libraries and the virtual env prevents python from seeing them. Use this set of commands:
 
 ```bash
@@ -10,15 +10,15 @@ sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
 sudo apt-get update
 sudo apt-get install libgdal-dev
 sudo apt-get build-dep python-imaging
-pip install --upgrade pip
-pip install Pillow
-pip install gsconfig
+sudo pip install --upgrade pip
+sudo pip install Pillow
+sudo pip install gsconfig
 export CPLUS_INCLUDE_PATH=/usr/include/gdal
 export C_INCLUDE_PATH=/usr/include/gdal
-pip install GDAL==1.10.0
+sudo pip install GDAL==1.10.0
 ```
 
-###### Install PostGIS for datastore database
+##### Install PostGIS for datastore database
 It is mandatory to have the PostGIS extension installed and activated on the datastore database. For example, if you are working on an Ubuntu machine:
 
 ```bash
@@ -32,8 +32,13 @@ psql datastore_default
 # install extension
 datastore_default=# CREATE EXTENSION postgis;
 ```
+or on Debian 8:
 
-###### (optional) Install SSL compatible Python Version
+```bash
+sudo -u postgres psql -d datastore_default -c 'CREATE EXTENSION postgis;'
+```
+
+##### (optional) Install SSL compatible Python Version
 If your Server does have SSL enabled and if you are working on an Ubuntu 14.04 LTS or prior system: by default version 2.7.6 of Python is installed. Due to SSL fixes ist is mandatory to update to a version 2.7.9+. Check which version is installed:
 
 ```python
@@ -50,6 +55,28 @@ sudo apt-add-repository ppa:fkrull/deadsnakes-python2.7
 sudo apt-get update
 sudo apt-get install python2.7 python2.7-dev
 ```
+
+>The new python installation has to be activate in CKAN's virtual environment:
+
+>```bash
+cd /usr/lib/ckan/default/src/ckan
+. /usr/lib/ckan/default/bin/activate
+sudo virtualenv --no-site-packages /usr/lib/ckan/default
+```
+
+> **Note:**
+> 
+> If an error occurs like the following:
+
+> ```bash
+> The program 'virtualenv' is currently not installed.
+> ```
+
+>then install with the following command:
+
+>```bash
+>sudo apt-get install python-virtualenv
+>```
 
 Additionally,  follow the instructions here [https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning](https://urllib3.readthedocs.org/en/latest/security.html#insecureplatformwarning) and update the ndg-httpsclient to a newer version which can handle https requests:
 
@@ -70,6 +97,21 @@ cd /usr/lib/ckan/default/src
 git clone https://github.com/GeoinformationSystems/ckanext-geoserver.git
 cd ckanext-geoserver/
 pip install -r requirements.txt
+```
+
+> If an error simmilar to the following occurs:
+
+>```error
+>Command "/usr/lib/ckan/default/bin/python -c "import setuptools, tokenize;__file__='/tmp/pip-build-nEO9Nd/gdal/
+>setup.py';exec(compile(getattr(tokenize, 'open', open)(__file__).read().replace('\r\n', '\n'), __file__, 'exec'))" install
+> --record /tmp/pip-d_mpqx-record/install-record.txt --single-version-externally-managed --compile --install
+> -headers /usr/lib/ckan/default/include/site/python2.7/gdal" 
+> failed with error code 1 in /tmp/pip-build-nEO9Nd/gdal
+>```
+> please update the `setuptools`:
+
+>```bash 
+sudo pip install -U setuptools
 ```
 
 After installation completes, edit `/etc/ckan/default/production.ini` with the following custom configurations:
@@ -118,6 +160,12 @@ cd /usr/lib/ckan/default/src/ckanext-geoserver
 python setup.py develop
 ```
 
+Give writing permissions to the `/var/tmp/` folder:
+ 
+```bash
+chmod 777 -R /var/tmp
+```
+
 Restart the Apache
 
 ```bash
@@ -137,7 +185,7 @@ import urllib2
 import urllib
 import json
 
-request = urllib2.Request('http://YOUT_SERVER/api/3/action/geoserver_publish_ogc')
+request = urllib2.Request('http://YOUR_SERVER/api/3/action/geoserver_publish_ogc')
 ```
 
 To use this endpoints you have to create a dictionary and provide your API key in an HTTP request. So include it in an Authorization header like in this python code:

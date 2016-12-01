@@ -54,9 +54,7 @@ class OgcController(BaseController):
             return result
 
         try:
-            log.info("publishOGC.4")
             result = toolkit.get_action('geoserver_publish_ogc')(context, {'package_id': package_id, 'resource_id': resource_id, 'workspace_name': workspace_name, 'layer_name': layer_name, 'username': username, 'col_latitude': lat_field, 'col_longitude': lng_field, 'layer_version': version, 'join_key': join_key})
-            log.info("publishOGC.5")
         except:
             return {
                 'success': False,
@@ -127,20 +125,21 @@ class OgcController(BaseController):
                 if url and workspace:
                     oResponse = requests.get(urllib.unquote_plus(url))
 
+                    obj = oResponse.text
                     #Replace the (#name_workspace) from NamespaceURI
-                    obj = oResponse.text.replace('#'+workspace, '')
+                    #obj = oResponse.text.replace('#'+workspace, '')
 
                     #Add API URL in all links in order to make system go through it instead of hitting geoserver direclty to remove (#name_workspace) from all ogc services XML
-                    siteUrl = config.get('ckan.site_url', None)
+                    #siteUrl = config.get('ckan.site_url', None)
 
-                    if siteUrl:
-                        newServiceUrl = siteUrl+"/geoserver/get-ogc-services?url="
-                        match = re.compile('xlink:href=[\'|"](.*?)[\'"]')
-                        matches = match.findall(obj)
+                    #if siteUrl:
+                    #    newServiceUrl = siteUrl+"/geoserver/get-ogc-services?url="
+                    #    match = re.compile('xlink:href=[\'|"](.*?)[\'"]')
+                    #    matches = match.findall(obj)
 
                         #loop through all occurrences and replace one by one to add the link API Ckan-Geoserver
-                        for item in matches:
-                            obj = obj.replace(item, newServiceUrl+urllib.quote_plus(item)+"&amp;workspace="+workspace, 1)
+                    #    for item in matches:
+                    #        obj = obj.replace(item, newServiceUrl+urllib.quote_plus(item)+"&amp;workspace="+workspace, 1)
 
                 else:
                     msg = 'An error ocurred: [Bad Request - Missing parameters]'
@@ -157,9 +156,9 @@ class OgcController(BaseController):
                     getFeatureURL = getFeatureURL+"&maxfeatures=%s" % maxfeatures
 
                 oResponse = requests.get(getFeatureURL)
-
+                onj = oResponse.text
                 #Replace the (#name_workspace) from NamespaceURI
-                obj = oResponse.text.replace('#'+workspace, '')
+                #obj = oResponse.text.replace('#'+workspace, '')
 
             response.content_type = 'application/xml; charset=utf-8'
             response.headers['Content-Length'] = len(obj)
