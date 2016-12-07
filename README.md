@@ -94,7 +94,7 @@ cd /usr/lib/ckan/default/src/ckan
 . /usr/lib/ckan/default/bin/activate
 
 cd /usr/lib/ckan/default/src
-git clone https://github.com/GeoinformationSystems/ckanext-geoserver.git
+pip install -e 'git+https://github.com/GeoinformationSystems/ckanext-geoserver.git#egg=ckanext-geoserver'
 cd ckanext-geoserver/
 pip install -r requirements.txt
 ```
@@ -163,7 +163,7 @@ python setup.py develop
 Give writing permissions to the `/var/tmp/` folder:
  
 ```bash
-chmod 777 -R /var/tmp
+sudo chmod 777 -R /var/tmp
 ```
 
 Restart the Apache
@@ -171,12 +171,44 @@ Restart the Apache
 ```bash
 sudo service apache2 restart
 ```
+
+If your dataset is now qualified (schema descriptor or shape file(s)) and you have the permission to edit this dataset, then you should see a `Publish/Unpublish OGC` button next to your dataset name in the dataset detail page.
+
+![ckanext-geoserver publish button on detailed side](/Users/danielhenzen/Documents/Projekte/COLABIS/CKAN/documentation/pictures/ckanext-geoserver_publish_button.png)
+
 ## API extension
+
+Please follow the API guide of CKAN at http://docs.ckan.org/en/latest/api/index.html to get a common understanding of the capabilities and the workflow of how to use CKANs included API.
+
+### Extended API Reference
+
+* `ckan.logic.action.geoserver_publish_ogc(context, data_dict)`
+
+	Publish a qualified dataset as OGC complied service on a geoserver.
+	The user must have permission to 'edit' the dataset. Return `True` if the publishing process was successful and `False` otherwise.
+	
+	**Parameter:**
+	* **package_id** (*string*) - the id of the package for publish
+	* **join_key** (*string*) - the key if database table joins are necessary
+
+	**Return type:** boolean
+	
+* `ckan.logic.action.geoserver_unpublish_ogc(context, data_dict)`	
+	Unpublish a already published dataset from geoserver.
+	The user must have permission to 'edit' the dataset. Return `True` if the unpublishing process was successful and `False` otherwise.
+	
+	**Parameter:**
+	* **package_id** (*string*) - the id of the package for unpublish
+
+	**Return type:** boolean
+
+### Application Example
 
 The action API of CKAN is extended with new endpoints:
 
 * `/api/3/action/geoserver_publish_ogc` to publish a package
 * `/api/3/action/geoserver_unpublish_ogc` to unpublish a package
+
 
 Example in python:
 
@@ -194,14 +226,14 @@ To use this endpoints you have to create a dictionary and provide your API key i
 request.add_header('Authorization', 'YOUR KEY')
 ```
 
-The dictionary has to have information about the package which should be published or unpublished [mandatory] and can have information about the keys which should be used when a join over different tables (->resource descriptor) is neccesary.
+The dictionary has to have information about the package which should be published or unpublished [mandatory] and can have information about the keys which should be used when a join over different tables is necessary.
 
 Example in python:
 
 ```python
 dataset_dict = {
 	'package_id': 'ID_OF_PACKAGE', # the id of the package for update
-	'join_key': 'KEY_FOR_JOIN' # the key if database table joins are neccesary
+	'join_key': 'KEY_FOR_JOIN' # the key if database table joins are necessary
 }
 ```
 

@@ -197,7 +197,7 @@ def unpublish_ogc(context, data_dict):
 
 def map_search_wms(context, data_dict):
     def wms_resource(resource):
-        if resource.get("protocol", {}) == "OGC:WMS":
+        if resource.get("protocol", {}) == "WMS":
             return True
         else:
             return False

@@ -25,7 +25,7 @@ def check_published(resource):
             except (NotFound):
                 continue
 
-            if extras['parent_resource'] == resource_id and ( extras['protocol'].lower() == 'ogc:wms' or extras['ogc_type'].lower() == 'ogc:wfs'):
+            if extras['parent_resource'] == resource_id and ( extras['protocol'].lower() == 'wms' or extras['ogc_type'].lower() == 'wfs'):
                 print resource.state
                 if resource.state !='active':
                     return False
