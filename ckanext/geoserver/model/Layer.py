@@ -301,8 +301,8 @@ class Layer(object):
                     self.geoserver.create_style(self.getName(), cleaned_xml, overwrite=True)
                     # connect sld to layer
                     layer = self.geoserver.get_layer(self.store.workspace.name+":"+self.getName())
-
                     layer._set_default_style(self.getName())
+                    self.geoserver.save(layer)
 
                 break
 
