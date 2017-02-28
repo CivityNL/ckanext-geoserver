@@ -20,11 +20,13 @@ class MultiRasterFile(object):
 
     package_id = None
     connection_url = None
+    upload_file_location = None
     
     def __init__(self, package_id):
         log.info("multiRasterfile.1")
         self.package_id = package_id
         self.connection_url = config.get('ckan.datastore.write_url')
+        self.upload_file_location = config.get('geoserver.upload_file')
         log.info("multiRasterfile.2")
         if not self.connection_url:
             log.info("multiRasterfile.3")
@@ -41,7 +43,9 @@ class MultiRasterFile(object):
         geometry field value and creates it in the table.
         """
         log.info("multiRasterfile_publish.1")
-        testserver = "http://10.211.55.11:8080/GeoserverService/upload/file"
+
+        if self.upload_file_location is None:
+            return False
 
         valid_endings = ["geotiff"]
         for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
@@ -66,7 +70,7 @@ class MultiRasterFile(object):
         testfile = tmpFolder + label
 
         files = {'file': (testfile, open(testfile, "rb"), 'image/tiff', {"Expires": "0"}), 'foldername':self.package_id}
-        r = requests.post(testserver, files=files)
+        r = requests.post(self.upload_file_location, files=files)
         return True
 
     def getName(self):
