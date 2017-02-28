@@ -84,6 +84,16 @@ Additionally,  follow the instructions here [https://urllib3.readthedocs.org/en/
 pip install --upgrade ndg-httpsclient
 ```
 
+##### Install GeoserverService
+For the raster publishing process it is mandatory to copy the files in the filesystem of the Geoserver. Since this is not possible within the web-environment and Geoserver itself do not provides such a function, you have to populate the project https://github.com/GeoinformationSystems/GeoserverService into the Geoserver.
+
+Additionally, it is necessary to create a file storage on the CKAN machine with full write access. For this, please use the following commands:
+
+```bash
+sudo mkdir /var/tmp/GeoserverUpload
+chmod 777 -R /var/tmp/GeoserverUpload
+```
+ 
 
 ### Installation
 
@@ -93,7 +103,7 @@ After that install the Geoserver extension. We use the forked extension from ori
 cd /usr/lib/ckan/default/src/ckan
 . /usr/lib/ckan/default/bin/activate
 
-cd /usr/lib/ckan/default/src
+cd /usr/lib/ckan/default
 pip install -e 'git+https://github.com/GeoinformationSystems/ckanext-geoserver.git#egg=ckanext-geoserver'
 cd ckanext-geoserver/
 pip install -r requirements.txt

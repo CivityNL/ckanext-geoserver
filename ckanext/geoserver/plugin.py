@@ -89,5 +89,6 @@ class GeoserverPlugin(p.SingletonPlugin):
             'geoserver_check_published': helpers.check_published,
             'geoserver_check_descriptor_only': helpers.check_descriptor_only,
             'geoserver_shapefile_publishing_requirements_fulfiled': helpers.shapefile_publishing_requirements_fulfiled,
-            'geoserver_get_descriptor_name': helpers.get_descriptor_name
+            'geoserver_get_descriptor_name': helpers.get_descriptor_name,
+            'geoserver_rasters_to_publish': helpers.geoserver_rasters_to_publish
         }

@@ -155,3 +155,21 @@ def update_package_published_status(package_id, status):
     toolkit.get_action('package_patch')(None, {'id': package_id, 'extras':extras, 'tags': tags})
 
     return True
+
+def geoserver_rasters_to_publish(package_id):
+    '''
+    Ckeck if the given package fulfils the minimum needs to publish the shapefile. This is a check on the existence of the mandatory file extensions .shp, .shx, .dbf
+    '''
+    valid_endings = ["geotiff"]
+
+    # Look at the file extensions in the zipfile
+    extensions = []
+    # extensions = [path.splitext(info.filename)[1] for info in zf.infolist()]
+    # go get resources
+    for resource in toolkit.get_action("package_show")(None, {"id": package_id}).get('resources', []):
+        extensions.append(resource.get("format", {}))
+
+    for ending in extensions:
+        for valid in valid_endings:
+            if ending==valid:
+                return True

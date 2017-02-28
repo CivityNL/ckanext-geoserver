@@ -50,50 +50,55 @@ def publish_ogc(context, data_dict):
             layer_name = "shapefile_multi"
             workspace_name = "shapefile_multi"
         else:
-            pkg = toolkit.get_action('package_show')(None, {'id': package_id})
-            extras = pkg.get('extras', [])
+            if helpers.geoserver_rasters_to_publish(data_dict.get("package_id", None)):
+                resource_id = "raster_multi"
+                layer_name = "raster_multi"
+                workspace_name = "raster_multi"
+            else:
+                pkg = toolkit.get_action('package_show')(None, {'id': package_id})
+                extras = pkg.get('extras', [])
 
-            for extra in extras:
-                key = extra.get('key', None)
-                if key == descriptor_name:
-                    schema_descriptor = json.loads(extra.get('value'))
+                for extra in extras:
+                    key = extra.get('key', None)
+                    if key == descriptor_name:
+                        schema_descriptor = json.loads(extra.get('value'))
 
-            for member in schema_descriptor.get("members"):
-                # if single
-                if member.get('resource_type') == 'observations_with_geometry':
-                    resource_id = member.get('resource_name')[0]
-                    layer_name = member.get('resource_name')[0]
-                    workspace_name = member.get('resource_name')[0]
-                    for field in member.get('fields'):
-                        if field.get('field_role') == "latitude":
-                            lat_field = field.get('field_id')
-                        if field.get('field_role') == "longitude":
-                            lng_field = field.get('field_id')
-                # if multi get lat/lng from correct file
-                if member.get('resource_type') == 'observed_geometries':
-                    isMulti = True
-                    resource_id = "schema_descriptor_multi"
-                    layer_name = "schema_descriptor_multi"
-                    workspace_name = "schema_descriptor_multi"
-                    for field in member.get('fields'):
-                        if field.get('field_role') == "latitude":
-                            lat_field = field.get('field_id')
-                        if field.get('field_role') == "longitude":
-                            lng_field = field.get('field_id')
-                    if join_key is None:
-                        # collect all fields of geom
-                        geom_fields = member.get('fields')
-                if member.get('resource_type') == 'observations':
-                    if join_key is None:
-                        # collect all fields of observations
-                        obs_fields = member.get('fields')
+                for member in schema_descriptor.get("members"):
+                    # if single
+                    if member.get('resource_type') == 'observations_with_geometry':
+                        resource_id = member.get('resource_name')[0]
+                        layer_name = member.get('resource_name')[0]
+                        workspace_name = member.get('resource_name')[0]
+                        for field in member.get('fields'):
+                            if field.get('field_role') == "latitude":
+                                lat_field = field.get('field_id')
+                            if field.get('field_role') == "longitude":
+                                lng_field = field.get('field_id')
+                    # if multi get lat/lng from correct file
+                    if member.get('resource_type') == 'observed_geometries':
+                        isMulti = True
+                        resource_id = "schema_descriptor_multi"
+                        layer_name = "schema_descriptor_multi"
+                        workspace_name = "schema_descriptor_multi"
+                        for field in member.get('fields'):
+                            if field.get('field_role') == "latitude":
+                                lat_field = field.get('field_id')
+                            if field.get('field_role') == "longitude":
+                                lng_field = field.get('field_id')
+                        if join_key is None:
+                            # collect all fields of geom
+                            geom_fields = member.get('fields')
+                    if member.get('resource_type') == 'observations':
+                        if join_key is None:
+                            # collect all fields of observations
+                            obs_fields = member.get('fields')
 
-            if join_key is None and isMulti:
-                # compare fields and select best for
-                for geom_field in geom_fields:
-                    for obs_field in obs_fields:
-                        if geom_field.get('field_id').lower() == obs_field.get('field_id').lower():
-                            join_key = geom_field.get('field_id').lower()
+                if join_key is None and isMulti:
+                    # compare fields and select best for
+                    for geom_field in geom_fields:
+                        for obs_field in obs_fields:
+                            if geom_field.get('field_id').lower() == obs_field.get('field_id').lower():
+                                join_key = geom_field.get('field_id').lower()
 
     # Check that you have everything you need
     if None in [resource_id, layer_name, username, package_id, layer_version, workspace_name]:
@@ -168,7 +173,7 @@ def unpublish_ogc(context, data_dict):
                     resource_id = "schema_descriptor_multi"
                     layer_name = "schema_descriptor_multi"
 
-    if resource_id == 'schema_descriptor_multi' or resource_id == 'shapefile_multi':
+    if resource_id.endswith("_multi"):
         file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
     else:
         file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})

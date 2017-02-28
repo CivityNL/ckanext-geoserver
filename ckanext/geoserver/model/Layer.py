@@ -5,6 +5,7 @@ from ckanext.geoserver.model.Datastored import Datastored
 from ckanext.geoserver.model.ShapeFile import Shapefile
 from ckanext.geoserver.model.MultiDatastored import MultiDatastored
 from ckanext.geoserver.model.MultiShapeFile import MultiShapeFile
+from ckanext.geoserver.model.MultiRasterFile import MultiRasterFile
 from ckan.plugins import toolkit
 from pylons import config
 from lxml import etree, objectify
@@ -49,7 +50,8 @@ class Layer(object):
         self.name = layer_name
         self.layer_version = layer_version
         self.username = username
-        if resource_id == 'schema_descriptor_multi' or resource_id == 'shapefile_multi':
+
+        if resource_id.endswith("_multi"):
             self.file_resource = toolkit.get_action("package_show")(None, {"id": package_id})
         else:
             self.file_resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
@@ -59,7 +61,9 @@ class Layer(object):
         self.workspace_name = workspace_name
         self.join_key = join_key
 
-        if resource_id != 'schema_descriptor_multi' and resource_id != 'shapefile_multi':
+
+        if not resource_id.endswith("_multi"):
+
             url = self.file_resource["url"]
             kwargs = {"resource_id": self.file_resource["id"]}
             # Determine whether to handle the data with shapefile or datastored csv operators
@@ -85,6 +89,8 @@ class Layer(object):
                     })
             elif resource_id == 'shapefile_multi':
                 cls = MultiShapeFile
+            elif resource_id == "raster_multi":
+                cls = MultiRasterFile
             else:
                 # The resource cannot be spatialized
                 raise Exception(toolkit._("Can not spatialize package."))
@@ -130,47 +136,66 @@ class Layer(object):
         """
 
         # If the layer already exists in Geoserver then return it
-        layer = self.geoserver.get_layer(self.name)
+        if self.resource_id.endswith("_multi"):
+            layer = self.geoserver.get_layer(self.getName())
+        else:
+            layer = self.geoserver.get_layer(self.name)
         layer_workspace_name = None
         if layer:
             layer_workspace_name = str(layer.resource._workspace).replace(' ','').split('@')[0]
 
         if not layer or (layer_workspace_name and layer_workspace_name != self.workspace_name):
-            #Construct layer creation request.
-            feature_type_url = url(self.geoserver.service_url, [
-                "workspaces",
-                self.store.workspace.name,
-                "datastores",
-                self.store.name,
-                "featuretypes"
-            ])
 
-            if self.resource_id == 'schema_descriptor_multi' or self.resource_id == 'shapefile_multi':
-                description = self.file_resource["notes"]
+            if self.resource_id == "raster_multi":
+                ws = self.geoserver.default_workspace()
+                valid_endings = ["geotiff"]
+                for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
+                    for valid in valid_endings:
+                        if resource.get("format", {}) == valid:
+                            url = resource.get("url", {})
+                            break
+
+                label = url.rsplit('/', 1)[-1]
+
+                self.geoserver.create_coveragestore_external_geotiff(self.getName(),"file:///var/tmp/GeoserverUpload/"+self.package_id+"/"+label, ws, overwrite=True)
+                layer = self.geoserver.get_layer(self.getName())
             else:
-                description = self.file_resource["description"]
-            data = {
-                "featureType": {
-                    "name": self.getName(),
-                    "nativeName": self.getName(),
-                    "title": self.file_resource["name"],
-                    "abstract": description
+                #Construct layer creation request.
+                feature_type_url = url(self.geoserver.service_url, [
+                    "workspaces",
+                    self.store.workspace.name,
+                    "datastores",
+                    self.store.name,
+                    "featuretypes"
+                ])
+
+                if self.resource_id.endswith("_multi"):
+                    description = self.file_resource["notes"]
+                else:
+                    description = self.file_resource["description"]
+
+                data = {
+                    "featureType": {
+                        "name": self.getName(),
+                        "nativeName": self.getName(),
+                        "title": self.file_resource["name"],
+                        "abstract": description
+                    }
                 }
-            }
 
-            request_headers = {"Content-type": "application/json"}
+                request_headers = {"Content-type": "application/json"}
 
-            response_headers, response = self.geoserver.http.request(
-                feature_type_url,
-                "POST",
-                json.dumps(data),
-                request_headers
-            )
-            if (not "already exists in store" in response):
-                if (not 200 <= response_headers.status < 300):
-                    raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
+                response_headers, response = self.geoserver.http.request(
+                    feature_type_url,
+                    "POST",
+                    json.dumps(data),
+                    request_headers
+                )
+                if (not "already exists in store" in response):
+                    if (not 200 <= response_headers.status < 300):
+                        raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
 
-            layer = self.geoserver.get_layer(self.name)
+                layer = self.geoserver.get_layer(self.name)
             return layer
 
         # Add the layer's name to the file resource
@@ -240,23 +265,45 @@ class Layer(object):
         }
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
-        # WFS Resource Creation
-        data_dict.update({
-            "package_id": self.package_id,
-            'parent_resource': self.file_resource['id'],
-            "url": ckanOGCServicesURL(capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0')),
-            "description": "WFS for %s" % self.file_resource["name"],
-            'distributor': self.file_resource.get("distributor", json.dumps({"name": "Unknown", "email": "unknown"})),
-            "protocol": "WFS",
-            "format": "WFS",
-            "feature_type":"%s:%s" % (self.store.workspace.name, self.name),
-            'resource_format': 'data-service',
-            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
-        })
-        self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
+        if self.resource_id == "raster_multi":
+            # WCS Resource Creation
+            data_dict.update({
+                "package_id": self.package_id,
+                'parent_resource': self.file_resource['id'],
+                "url": ckanOGCServicesURL(
+                    capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WCS', '1.1.1')),
+                "description": "WCS for %s" % self.file_resource["name"],
+                'distributor': self.file_resource.get("distributor",
+                                                      json.dumps({"name": "Unknown", "email": "unknown"})),
+                "protocol": "WCS",
+                "format": "WCS",
+                "feature_type": "%s:%s" % (self.store.workspace.name, self.name),
+                'resource_format': 'data-service',
+                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WCS',
+                                            '1.1.1'),
+            })
+            self.wcs_resource = toolkit.get_action('resource_create')(context, data_dict)
 
-        # Return the two resource dicts
-        return self.wms_resource, self.wfs_resource
+            # Return the two resource dicts
+            return self.wms_resource, self.wcs_resource
+        else:
+            # WFS Resource Creation
+            data_dict.update({
+                "package_id": self.package_id,
+                'parent_resource': self.file_resource['id'],
+                "url": ckanOGCServicesURL(capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0')),
+                "description": "WFS for %s" % self.file_resource["name"],
+                'distributor': self.file_resource.get("distributor", json.dumps({"name": "Unknown", "email": "unknown"})),
+                "protocol": "WFS",
+                "format": "WFS",
+                "feature_type":"%s:%s" % (self.store.workspace.name, self.name),
+                'resource_format': 'data-service',
+                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
+            })
+            self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
+
+            # Return the two resource dicts
+            return self.wms_resource, self.wfs_resource
 
     def remove_geo_resources(self):
         """
@@ -316,7 +363,7 @@ class Layer(object):
 
 
     def getName(self):
-        if self.resource_id == 'schema_descriptor_multi' or self.resource_id == 'shapefile_multi' :
+        if self.resource_id.endswith("_multi"):
             return "_" + re.sub('-','_', self.package_id)
         else:
             return "_" + re.sub('-','_', self.name)
