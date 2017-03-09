@@ -63,13 +63,12 @@ class Layer(object):
 
 
         if not resource_id.endswith("_multi"):
-
-            url = self.file_resource["url"]
+            url_ = self.file_resource["url"]
             kwargs = {"resource_id": self.file_resource["id"]}
             # Determine whether to handle the data with shapefile or datastored csv operators
-            if url.endswith('.zip'):
+            if url_.endswith('.zip'):
                 cls = Shapefile
-            elif url.endswith('.csv'):
+            elif url_.endswith('.csv'):
                 cls = Datastored
                 kwargs.update({
                     "lat_field": lat_field,
@@ -152,10 +151,10 @@ class Layer(object):
                 for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
                     for valid in valid_endings:
                         if resource.get("format", {}) == valid:
-                            url = resource.get("url", {})
+                            url_ = resource.get("url", {})
                             break
 
-                label = url.rsplit('/', 1)[-1]
+                label = url_.rsplit('/', 1)[-1]
 
                 self.geoserver.create_coveragestore_external_geotiff(self.getName(),"file:///var/tmp/GeoserverUpload/"+self.package_id+"/"+label, ws, overwrite=True)
                 layer = self.geoserver.get_layer(self.getName())
@@ -332,8 +331,8 @@ class Layer(object):
         for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
             # use first found sld file as style
             if resource.get("format", {}).lower() == "sld":
-                url = resource.get("url", {})
-                xml_file = open(helpers.file_path_from_url_shp(url), 'r')
+                url_ = resource.get("url", {})
+                xml_file = open(helpers.file_path_from_url_shp(url_), 'r')
                 xml_string = xml_file.read()
                 xml_file.close()
                 # validate sld according to xsd
