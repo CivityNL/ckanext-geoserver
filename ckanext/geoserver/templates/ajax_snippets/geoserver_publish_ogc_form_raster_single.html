@@ -1,34 +1,39 @@
 <html>
 <head>
-    <title></title>
+  <title></title>
 </head>
 
 <body>
-    {% block geoserver_publish_ogc_form %}
+{% block geoserver_publish_ogc_form %}
 
-    <div id="publish_ogc_modal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="publish_ogc_modal_label" aria-hidden="true">
-        <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+  <div id="publish_ogc_modal" class="modal hide fade" tabindex="-1" role="dialog"
+       aria-labelledby="publish_ogc_modal_label" aria-hidden="true">
+    <div class="modal-header">
+      <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
 
-            <h3>Geoserver OGC Controller</h3>
+      <h3>Geoserver OGC Controller</h3>
+    </div>
+
+    <div class="modal-body">
+      <div class="alert hide"></div>
+
+      <form class="form-horizontal" id="publish-ogc-form" data-module="geoserver_resource_form">
+        <div class="control-group">
+          {#                    <i class="icon-warning-sign" aria-hidden="true"></i> Caution: <br /><br />#}
+          {#                    To publish the zip-archive on Geoserver it is mandatory that the zipped archive contains as <strong>minimum</strong> the following files <strong>*.shp, *.shx and *.dbf</strong> and the zip-archive-<strong>name ends with *.shp.zip</strong>.#}
+          {#                    <hr>#}
+          <input type="hidden" id="resource_id" name="resource_id" value=""> <input type="hidden" id="package_id"
+                                                                                    name="package_id" value="">
+          <button type="submit" class="btn btn-primary pull-right" data-module="geoserver_resource_form">Publish OGC
+                                                                                                         Services
+          </button>
         </div>
+      </form>
+    </div>
 
-        <div class="modal-body">
-            <div class="alert hide"></div>
-
-            <form class="form-horizontal" id="publish-ogc-form" data-module="geoserver_resource_form">
-                <div class="control-group">
-{#                    <i class="icon-warning-sign" aria-hidden="true"></i> Caution: <br /><br />#}
-{#                    To publish the zip-archive on Geoserver it is mandatory that the zipped archive contains as <strong>minimum</strong> the following files <strong>*.shp, *.shx and *.dbf</strong> and the zip-archive-<strong>name ends with *.shp.zip</strong>.#}
-{#                    <hr>#}
-                    <input type="hidden" id="resource_id" name="resource_id" value=""> <input type="hidden" id="package_id" name="package_id" value=""> <button type="submit" class="btn btn-primary pull-right" data-module="geoserver_resource_form">Publish OGC Services</button>
-                </div>
-            </form>
-        </div>
-
-        <div class="modal-footer">
-            <a href="#" class="btn" data-dismiss="modal">Close</a>
-        </div>
-    </div>{% endblock %}
+    <div class="modal-footer">
+      <a href="#" class="btn" data-dismiss="modal">Close</a>
+    </div>
+  </div>{% endblock %}
 </body>
 </html>

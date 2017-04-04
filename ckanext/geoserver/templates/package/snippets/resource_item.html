@@ -1,71 +1,93 @@
 {% ckan_extends %}
 
 {% block resource_item_explore_links %}
-{% set rd_only = h.geoserver_check_descriptor_only() %}
-{% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not rd_only %}
-<li>
-  {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
-  {% if published  == "true" %}
-  <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
-    <i class="icon-globe"></i>
-    {{ _('Unpublish OGC') }}
-  </a>
-  {% else %}
-  <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
-    <i class="icon-globe"></i>
-    {{ _('Publish OGC') }}
-  </a>
+  {% set schema_descriptor_only = h.geoserver_check_descriptor_only() %}
+  {% if res.format.lower() == 'csv' and can_edit and not c.pkg_dict.private and not schema_descriptor_only %}
+    <li>
+      {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
+      {% if published  == "true" %}
+        <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Unpublish OGC') }}
+        </a>
+      {% else %}
+        <a href="#" data-module="geoserver_publish_ogc" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Publish OGC') }}
+        </a>
+      {% endif %}
+    </li>
   {% endif %}
-</li>
-{% endif %}
-{% if res.format.lower() == 'zip' and can_edit and not c.pkg_dict.private%}
-  {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
-  {% if published  == "true" %}
+  {% if res.format.lower() == 'geotiff' and can_edit and not c.pkg_dict.private and not schema_descriptor_only %}
+    <li>
+      {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
+      {% if published  == "true" %}
+        <a href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Unpublish OGC') }}
+        </a>
+      {% else %}
+        <a href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Publish OGC') }}
+        </a>
+      {% endif %}
+    </li>
+  {% endif %}
+  {% if res.format.lower() == 'zip' and can_edit and not c.pkg_dict.private %}
+    {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
+    {% if published  == "true" %}
+      <li>
+        <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Unpublish OGC from SHP') }}
+        </a>
+      </li>
+    {% else %}
+      <li>
+        <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}"
+           data-module-resource="{{ res.id }}" id="{{ res.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Publish OGC from SHP') }}
+        </a>
+      </li>
+    {% endif %}
+  {% endif %}
   <li>
-    <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
-      <i class="icon-globe"></i>
-      {{ _('Unpublish OGC from SHP') }}
+    <a href="{{ url }}">
+      {% if res.can_be_previewed %}
+        <i class="icon-bar-chart"></i>
+        {{ _('Preview') }}
+      {% else %}
+        <i class="icon-info-sign"></i>
+        {{ _('More information') }}
+      {% endif %}
     </a>
   </li>
-  {% else %}
   <li>
-    <a href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}" data-module-resource="{{ res.id }}" id="{{ res.id }}">
-      <i class="icon-globe"></i>
-      {{ _('Publish OGC from SHP') }}
+    <a href="{{ res.url }}" class="resource-url-analytics" target="_blank">
+      {% if res.can_be_previewed %}
+        <i class="icon-download"></i>
+        {{ _('Download') }}
+      {% else %}
+        <i class="icon-external-link"></i>
+        {{ _('Go to resource') }}
+      {% endif %}
     </a>
   </li>
+  {% if can_edit %}
+    <li>
+      <a href="{{ h.url_for(controller='package', action='resource_edit', id=pkg.name, resource_id=res.id) }}">
+        <i class="icon-edit"></i>
+        {{ _('Edit') }}
+      </a>
+    </li>
   {% endif %}
-{% endif %}
-<li>
-  <a href="{{ url }}">
-    {% if res.can_be_previewed %}
-    <i class="icon-bar-chart"></i>
-    {{ _('Preview') }}
-    {% else %}
-    <i class="icon-info-sign"></i>
-    {{ _('More information') }}
-    {% endif %}
-  </a>
-</li>
-<li>
-  <a href="{{ res.url }}" class="resource-url-analytics" target="_blank">
-    {% if res.can_be_previewed %}
-    <i class="icon-download"></i>
-    {{ _('Download') }}
-    {% else %}
-    <i class="icon-external-link"></i>
-    {{ _('Go to resource') }}
-    {% endif %}
-  </a>
-</li>
-{% if can_edit %}
-<li>
-  <a href="{{ h.url_for(controller='package', action='resource_edit', id=pkg.name, resource_id=res.id) }}">
-    <i class="icon-edit"></i>
-    {{ _('Edit') }}
-  </a>
-</li>
-{% endif %}
-{% resource "geoserver/geoserver_publish_ogc.js" %}
-{% resource "geoserver/geoserver_publish_ogc_shp.js" %}
+  {% resource "geoserver/geoserver_publish_ogc.js" %}
+  {% resource "geoserver/geoserver_publish_ogc_shp.js" %}
 {% endblock %}

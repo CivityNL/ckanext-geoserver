@@ -5,9 +5,14 @@ import re
 from ckan.plugins import toolkit
 from pylons import config
 import logging
+import json
+import os
+
 import shutil
 import urllib2
 from os import makedirs
+from contextlib import closing
+from zipfile import ZipFile, ZIP_DEFLATED
 import ckanext.geoserver.misc.helpers as helpers
 
 log = logging.getLogger(__name__)
@@ -20,16 +25,15 @@ class MultiRasterFile(object):
 
     package_id = None
     connection_url = None
-    upload_file_location = None
-    
+    zipFileLocation = None
+    descriptor_name = None
+
     def __init__(self, package_id):
-        log.info("multiRasterfile.1")
         self.package_id = package_id
         self.connection_url = config.get('ckan.datastore.write_url')
-        self.upload_file_location = config.get('geoserver.upload_file')
-        log.info("multiRasterfile.2")
+        self.zipFileLocation = config.get('ckan.storage.directory')
+        self.descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
         if not self.connection_url:
-            log.info("multiRasterfile.3")
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
 
     def unpublish(self):
@@ -42,35 +46,73 @@ class MultiRasterFile(object):
         Resource in datastore database is checked for Geometry field. If the field doesn't exists then calculates the
         geometry field value and creates it in the table.
         """
-        log.info("multiRasterfile_publish.1")
 
-        if self.upload_file_location is None:
-            return False
+        self.zipFileLocation = self.zipFileLocation + "GeoserverUpload/" + self.package_id + "/zipped/"
 
-        valid_endings = ["geotiff"]
-        for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
-            for valid in valid_endings:
-                if resource.get("format", {}) == valid:
-                    url = resource.get("url", {})
-                    break
+        if not path.exists(self.zipFileLocation):
+            makedirs(self.zipFileLocation)
 
-        tmpFolder = "/var/tmp/" + self.package_id + "/"
+        extras = toolkit.get_action("package_show")(None, {"id": self.package_id}).get("extras", [])
 
-        if not path.exists(tmpFolder):
-            makedirs(tmpFolder)
+        for extra in extras:
+            key = extra.get('key', None)
+            if key == self.descriptor_name:
+                schema_descriptor = json.loads(extra.get('value'))
+                break
 
-        label = url.rsplit('/', 1)[-1]
-        log.info(label)
-        tmpFile = urllib2.urlopen(url)
-        log.info(tmpFolder)
-        log.info(tmpFile)
-        with open(tmpFolder + label, 'wb') as fp:
-            shutil.copyfileobj(tmpFile, fp)
+        for member in schema_descriptor.get("members"):
+            name_regex = member.get("name_regex").decode('string_escape')
+            resource_name = member.get("resource_name")
+            break
 
-        testfile = tmpFolder + label
+        m = re.search('<timeregex>(.+?)\)\\\\\.tif', name_regex)
+        if m:
+            timeregex = m.group(1)
 
-        files = {'file': (testfile, open(testfile, "rb"), 'image/tiff', {"Expires": "0"}), 'foldername':self.package_id}
-        r = requests.post(self.upload_file_location, files=files)
+        # clear tmp folder
+        for the_file in os.listdir(self.zipFileLocation):
+            file_path = os.path.join(self.zipFileLocation, the_file)
+            try:
+                if os.path.isfile(file_path):
+                    os.unlink(file_path)
+            except Exception as e:
+                print(e)
+
+        # copy all geotiffs from schema descriptor into tmp folder
+        for resource in resource_name:
+            url_ = toolkit.get_action("resource_show")(None, {"id": resource}).get("url", {})
+            label = url_.rsplit('/', 1)[-1]
+            tmpFile = urllib2.urlopen(url_)
+            with open(self.zipFileLocation + label, 'wb') as fp:
+                shutil.copyfileobj(tmpFile, fp)
+
+        # create indexer.properties file
+        with open(self.zipFileLocation + "/indexer.properties", "w+") as f:
+            f.write("AbsolutePath=true\n")
+            f.write("TimeAttribute=time\n")
+            f.write("AdditionalDomainAttributes=run\n")
+            f.write("Schema= the_geom:Polygon,location:String,time:java.util.Date,run:Integer\n")
+            f.write(
+                "PropertyCollectors=TimestampFileNameExtractorSPI[timeregex](time),StringFileNameExtractorSPI[runtime](run)\n")
+            f.write("CheckAuxiliaryMetadata=true\n")
+
+        # create timeregex.properties file based on regex
+        with open(self.zipFileLocation + "/timeregex.properties", "w+") as f:
+            f.write("regex=" + timeregex)
+
+        # create zip archive
+        with closing(ZipFile(self.zipFileLocation + "/" + self.package_id + ".zip", "w", ZIP_DEFLATED)) as z:
+            for root, dirs, files in os.walk(self.zipFileLocation):
+                # NOTE: ignore empty directories
+                for fn in files:
+                    if not fn.endswith(".zip"):
+                        absfn = os.path.join(root, fn)
+                        zfn = absfn[len(self.zipFileLocation) + len(os.sep):]
+                        z.write(absfn, zfn)
+
+        # save zipFile Location
+        self.zipFileLocation = self.zipFileLocation + "" + self.package_id + ".zip"
+
         return True
 
     def getName(self):

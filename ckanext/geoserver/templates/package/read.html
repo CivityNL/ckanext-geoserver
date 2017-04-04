@@ -2,73 +2,78 @@
 
 {% block page_heading %}
 
-{{ super() }}
+  {{ super() }}
 
-{% set rd = h.get_pkg_dict_extra(c.pkg_dict, 'schema_descriptor', '') %}
-{% set descriptor_name = h.geoserver_get_descriptor_name() %}
-{% set can_edit = h.check_access('package_update', {'id':pkg.id }) %}
-{% set shp_check = h.geoserver_shapefile_publishing_requirements_fulfiled(pkg.id) %}
-{% set raster_check = h.geoserver_rasters_to_publish(pkg.id) %}
-{% if rd and can_edit and not c.pkg_dict.private%}
-  <div class="publish-btn">
-    <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
-
-      {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
-      {% if published  == "true" %}
-      <a class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_schema_descriptor" data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
-        <i class="icon-globe"></i>
-        {{ _('Unpublish OGC') }}
-      </a>
-      {% else %}
-      <a class="btn btn-success" href="#" data-module="geoserver_publish_ogc_schema_descriptor" data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
-        <i class="icon-globe"></i>
-        {{ _('Publish OGC') }}
-      </a>
-
-      {% endif %}
-
-  </div>
-{% endif %}
-{% if shp_check and can_edit and not c.pkg_dict.private%}
-  <div class="publish-btn">
-    <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
+  {% set schema_descriptor = h.get_pkg_dict_extra(c.pkg_dict, 'schema_descriptor', '') %}
+  {% set descriptor_name = h.geoserver_get_descriptor_name() %}
+  {% set can_edit = h.check_access('package_update', {'id':pkg.id }) %}
+  {% set shp_check = h.geoserver_shapefile_publishing_requirements_fulfiled(pkg.id) %}
+  {% set raster_check = h.geoserver_rasters_to_publish(pkg.id) %}
+  <!-- schema descriptor for csv files -->
+  {% if schema_descriptor and can_edit and not c.pkg_dict.private %}
+    <div class="publish-btn">
+      <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
 
       {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
       {% if published  == "true" %}
-      <a  class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}">
-        <i class="icon-globe"></i>
-        {{ _('Unpublish OGC') }}
-      </a>
+        <a class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_schema_descriptor"
+           data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
+          <i class="icon-globe"></i>
+          {{ _('Unpublish OGC') }}
+        </a>
       {% else %}
-      <a  class="btn btn-success" href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}">
-        <i class="icon-globe"></i>
-        {{ _('Publish OGC') }}
-      </a>
+        <a class="btn btn-success" href="#" data-module="geoserver_publish_ogc_schema_descriptor"
+           data-module-package="{{ pkg.id }}" data-module-descriptorname="{{ descriptor_name }}">
+          <i class="icon-globe"></i>
+          {{ _('Publish OGC') }}
+        </a>
 
       {% endif %}
 
-  </div>
-{% endif %}
-
-{% if raster_check and can_edit and not c.pkg_dict.private%}
-  <div class="publish-btn">
-    <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
+    </div>
+  {% endif %}
+  <!-- shapefiles -->
+  {% if shp_check and can_edit and not c.pkg_dict.private %}
+    <div class="publish-btn">
+      <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->
 
       {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}
       {% if published  == "true" %}
-      <a  class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}">
-        <i class="icon-globe"></i>
-        {{ _('Unpublish OGC') }}
-      </a>
+        <a class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Unpublish OGC') }}
+        </a>
       {% else %}
-      <a  class="btn btn-success" href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}">
-        <i class="icon-globe"></i>
-        {{ _('Publish OGC') }}
-      </a>
+        <a class="btn btn-success" href="#" data-module="geoserver_publish_ogc_shp" data-module-package="{{ pkg.id }}">
+          <i class="icon-globe"></i>
+          {{ _('Publish OGC') }}
+        </a>
 
       {% endif %}
 
-  </div>
-{% endif %}
+    </div>
+  {% endif %}
+
+  <!-- raster files -->
+  {#{% if raster_check and can_edit and not c.pkg_dict.private and not schema_descriptor%}#}
+  {#  <div class="publish-btn">#}
+  {#    <!-- value in data-module-[name] is later available in javascript object obj.options.[name] -->#}
+  {##}
+  {#      {% set published = h.get_pkg_dict_extra(c.pkg_dict, 'published', '') %}#}
+  {#      {% if published  == "true" %}#}
+  {#      <a  class="btn btn-danger" href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}">#}
+  {#        <i class="icon-globe"></i>#}
+  {#        {{ _('Unpublish OGC') }}#}
+  {#      </a>#}
+  {#      {% else %}#}
+  {#      <a  class="btn btn-success" href="#" data-module="geoserver_publish_ogc_raster" data-module-package="{{ pkg.id }}">#}
+  {#        <i class="icon-globe"></i>#}
+  {#        {{ _('Publish OGC') }}#}
+  {#      </a>#}
+  {##}
+  {#      {% endif %}#}
+  {##}
+  {#  </div>#}
+  {#{% endif %}#}
 
 {% endblock %}

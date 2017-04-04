@@ -1,11 +1,12 @@
 from __future__ import absolute_import
-from geoserver.support import url
+from geoserver.support import url, DimensionInfo
 from ckanext.geoserver.model.Geoserver import Geoserver
 from ckanext.geoserver.model.Datastored import Datastored
 from ckanext.geoserver.model.ShapeFile import Shapefile
 from ckanext.geoserver.model.MultiDatastored import MultiDatastored
 from ckanext.geoserver.model.MultiShapeFile import MultiShapeFile
 from ckanext.geoserver.model.MultiRasterFile import MultiRasterFile
+from ckanext.geoserver.model.RasterFile import RasterFile
 from ckan.plugins import toolkit
 from pylons import config
 from lxml import etree, objectify
@@ -74,6 +75,8 @@ class Layer(object):
                     "lat_field": lat_field,
                     "lng_field": lng_field
                     })
+            elif url_.endswith('.tif'):
+                cls = RasterFile
             else:
                 # The resource cannot be spatialized
                 raise Exception(toolkit._("Only CSV and Shapefile data can be spatialized"))
@@ -88,7 +91,7 @@ class Layer(object):
                     })
             elif resource_id == 'shapefile_multi':
                 cls = MultiShapeFile
-            elif resource_id == "raster_multi":
+            elif resource_id == "schema_descriptor_timeseries_multi":
                 cls = MultiRasterFile
             else:
                 # The resource cannot be spatialized
@@ -145,18 +148,33 @@ class Layer(object):
 
         if not layer or (layer_workspace_name and layer_workspace_name != self.workspace_name):
 
-            if self.resource_id == "raster_multi":
+            if isinstance(self.data, RasterFile):
                 ws = self.geoserver.default_workspace()
-                valid_endings = ["geotiff"]
-                for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
-                    for valid in valid_endings:
-                        if resource.get("format", {}) == valid:
-                            url_ = resource.get("url", {})
-                            break
+                resource = toolkit.get_action("resource_show")(None, {"id": self.resource_id})
+                if resource.get("format", {}) == "geotiff":
+                    is_single_raster = True
+                    url_ = resource.get("url", {})
+                    label = url_.rsplit('/', 1)[-1]
+                    self.geoserver.create_coveragestore_external_geotiff(self.getName(),
+                                                                     "file:///var/tmp/GeoserverUpload/" + self.package_id + "/" + label,
+                                                                     ws, overwrite=True)
+                    layer = self.geoserver.get_layer(self.name)
 
-                label = url_.rsplit('/', 1)[-1]
+            elif isinstance(self.data, MultiRasterFile):
+                ws = self.geoserver.default_workspace()
+                label = toolkit.get_action("package_show")(None, {"id": self.package_id}).get("name", self.package_id)
 
-                self.geoserver.create_coveragestore_external_geotiff(self.getName(),"file:///var/tmp/GeoserverUpload/"+self.package_id+"/"+label, ws, overwrite=True)
+                self.geoserver.create_imagemosaic(self.getName(), self.data.zipFileLocation, overwrite=True)
+
+
+                coverage = self.geoserver.get_resource_by_url(
+                    ws.coveragestore_url.replace(".xml", "/" + self.getName() + "/coverages/" + self.getName() + ".xml"))
+
+                coverage.supported_formats = ['GEOTIFF']
+                coverage.title = label
+                timeInfo = DimensionInfo("time", "true", "LIST", None, "ISO8601", None)
+                coverage.metadata = ({'dirName':self.getName()+"_"+self.getName(), 'time': timeInfo})
+                self.geoserver.save(coverage)
                 layer = self.geoserver.get_layer(self.getName())
             else:
                 #Construct layer creation request.
