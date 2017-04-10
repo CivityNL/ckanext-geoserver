@@ -26,12 +26,15 @@ class Layer(object):
     """
 
     @classmethod
-    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
+    def publish(cls, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver,
+                store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
         """
         Publishes a layer as WMS and WFS OGC services in Geoserver.  Calls the 'Layer' class before the object
         instance to make a subclass via inheritance.
         """
-        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store, workspace, lat_field, lng_field, join_key)
+        layer = cls(package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store,
+                    workspace, lat_field, lng_field, join_key)
+        # layer.publish_init()
         if layer.create():
             return layer
         else:
@@ -46,7 +49,8 @@ class Layer(object):
             return False
 
     # Define properties of the object instance which will be passed into the class method
-    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver, store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
+    def __init__(self, package_id, resource_id, workspace_name, layer_name, layer_version, username, geoserver,
+                 store=None, workspace=None, lat_field=None, lng_field=None, join_key=None):
         self.geoserver = Geoserver.from_ckan_config()
         self.name = layer_name
         self.layer_version = layer_version
@@ -74,7 +78,7 @@ class Layer(object):
                 kwargs.update({
                     "lat_field": lat_field,
                     "lng_field": lng_field
-                    })
+                })
             elif url_.endswith('.tif'):
                 cls = RasterFile
             else:
@@ -88,7 +92,7 @@ class Layer(object):
                     "lat_field": lat_field,
                     "lng_field": lng_field,
                     "join_key": self.join_key
-                    })
+                })
             elif resource_id == 'shapefile_multi':
                 cls = MultiShapeFile
             elif resource_id == "schema_descriptor_timeseries_multi":
@@ -156,8 +160,8 @@ class Layer(object):
                     url_ = resource.get("url", {})
                     label = url_.rsplit('/', 1)[-1]
                     self.geoserver.create_coveragestore_external_geotiff(self.getName(),
-                                                                     "file:///var/tmp/GeoserverUpload/" + self.package_id + "/" + label,
-                                                                     ws, overwrite=True)
+                                                                         "file:///var/tmp/GeoserverUpload/" + self.package_id + "/" + label,
+                                                                         ws, overwrite=True)
                     layer = self.geoserver.get_layer(self.name)
 
             elif isinstance(self.data, MultiRasterFile):
@@ -168,12 +172,13 @@ class Layer(object):
 
 
                 coverage = self.geoserver.get_resource_by_url(
-                    ws.coveragestore_url.replace(".xml", "/" + self.getName() + "/coverages/" + self.getName() + ".xml"))
+                    ws.coveragestore_url.replace(".xml",
+                                                 "/" + self.getName() + "/coverages/" + self.getName() + ".xml"))
 
                 coverage.supported_formats = ['GEOTIFF']
                 coverage.title = label
                 timeInfo = DimensionInfo("time", "true", "LIST", None, "ISO8601", None)
-                coverage.metadata = ({'dirName':self.getName()+"_"+self.getName(), 'time': timeInfo})
+                coverage.metadata = ({'dirName': self.getName() + "_" + self.getName(), 'time': timeInfo})
                 self.geoserver.save(coverage)
                 layer = self.geoserver.get_layer(self.getName())
             else:
@@ -210,7 +215,8 @@ class Layer(object):
                 )
                 if (not "already exists in store" in response):
                     if (not 200 <= response_headers.status < 300):
-                        raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (response_headers.status, response))
+                        raise Exception(toolkit._("Geoserver layer creation failed: %i -- %s") % (
+                            response_headers.status, response))
 
                 layer = self.geoserver.get_layer(self.name)
             return layer
@@ -245,7 +251,8 @@ class Layer(object):
         def capabilities_url(service_url, workspace, layer, service, version):
 
             try:
-                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % (workspace, service, version, workspace, layer)
+                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % (
+                    workspace, service, version, workspace, layer)
                 return service_url.replace("/rest", specifications)
             except:
                 service = service.lower()
@@ -259,7 +266,7 @@ class Layer(object):
 
                 if siteUrl:
                     encodedURL = urllib.quote_plus(serviceUrl, '')
-                    newServiceUrl = siteUrl+"/geoserver/get-ogc-services?url="+encodedURL+"&workspace="+self.workspace_name
+                    newServiceUrl = siteUrl + "/geoserver/get-ogc-services?url=" + encodedURL + "&workspace=" + self.workspace_name
 
             except:
                 return serviceUrl
@@ -270,7 +277,8 @@ class Layer(object):
         data_dict = {
             'package_id': self.package_id,
             'parent_resource': self.file_resource['id'],
-            'url': ckanOGCServicesURL(capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1')),
+            'url': ckanOGCServicesURL(
+                capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1')),
             'description': 'WMS for %s' % self.file_resource['name'],
             'distributor': self.file_resource.get("distributor", json.dumps({"name": "Unknown", "email": "unknown"})),
             'protocol': 'WMS',
@@ -278,7 +286,8 @@ class Layer(object):
             'feature_type':"%s:%s" % (self.store.workspace.name, self.name),
             'layer':"%s" % self.name,
             'resource_format': 'data-service',
-            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1'),
+            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS',
+                                        '1.1.1'),
         }
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
@@ -308,14 +317,17 @@ class Layer(object):
             data_dict.update({
                 "package_id": self.package_id,
                 'parent_resource': self.file_resource['id'],
-                "url": ckanOGCServicesURL(capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0')),
+                "url": ckanOGCServicesURL(
+                    capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0')),
                 "description": "WFS for %s" % self.file_resource["name"],
-                'distributor': self.file_resource.get("distributor", json.dumps({"name": "Unknown", "email": "unknown"})),
+                'distributor': self.file_resource.get("distributor",
+                                                      json.dumps({"name": "Unknown", "email": "unknown"})),
                 "protocol": "WFS",
                 "format": "WFS",
-                "feature_type":"%s:%s" % (self.store.workspace.name, self.name),
+                "feature_type": "%s:%s" % (self.store.workspace.name, self.name),
                 'resource_format': 'data-service',
-                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0'),
+                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS',
+                                            '1.1.0'),
             })
             self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
 
@@ -329,7 +341,8 @@ class Layer(object):
         """
 
         context = {"user": self.username}
-        results = toolkit.get_action("resource_search")(context, {"query": "parent_resource:%s" % self.file_resource["id"]})
+        results = toolkit.get_action("resource_search")(context,
+                                                        {"query": "parent_resource:%s" % self.file_resource["id"]})
         for result in results.get("results", []):
             toolkit.get_action("resource_delete")(context, {"id": result["id"]})
 
@@ -357,19 +370,23 @@ class Layer(object):
                 if (self.xml_validator(xml_string)):
                     #do some xml cleaning
                     #   lowercase all table names
-                    cleaned_xml =re.sub("(<[a-zA-Z]*:PropertyName>)(\w*)(<\/[a-zA-Z]*:PropertyName>)", lambda match:match.group(1)+""+match.group(2).lower()+""+match.group(3), xml_string)
+                    cleaned_xml = re.sub("(<[a-zA-Z]*:PropertyName>)(\w*)(<\/[a-zA-Z]*:PropertyName>)",
+                                         lambda match: match.group(1) + "" + match.group(2).lower() + "" + match.group(
+                                             3), xml_string)
                     #   replace geom column name with "wkb_geometry"
-                    cleaned_xml = re.sub("(<[a-zA-Z]*:?Geometry>\s*<[a-zA-Z]*:?PropertyName>)(\w*)(<\/[a-zA-Z]*:?PropertyName>\s*<\/[a-zA-Z]*:?Geometry>)", lambda match: match.group(1)+"wkb_geometry"+match.group(3), cleaned_xml)
+                    cleaned_xml = re.sub(
+                        "(<[a-zA-Z]*:?Geometry>\s*<[a-zA-Z]*:?PropertyName>)(\w*)(<\/[a-zA-Z]*:?PropertyName>\s*<\/[a-zA-Z]*:?Geometry>)",
+                        lambda match: match.group(1) + "wkb_geometry" + match.group(3), cleaned_xml)
 
                     #add sld to geoserver
                     self.geoserver.create_style(self.getName(), cleaned_xml, overwrite=True)
                     # connect sld to layer
-                    layer = self.geoserver.get_layer(self.store.workspace.name+":"+self.getName())
+                    layer = self.geoserver.get_layer(self.store.workspace.name + ":" + self.getName())
+
                     layer._set_default_style(self.getName())
                     self.geoserver.save(layer)
 
                 break
-
 
     def xml_validator(self, some_xml_string, xsd_file='http://schemas.opengis.net/sld/1.0.0/StyledLayerDescriptor.xsd'):
         xsd = urllib.urlopen(xsd_file)
@@ -378,9 +395,8 @@ class Layer(object):
         doc = etree.parse(StringIO(some_xml_string))
         return schema.validate(doc)
 
-
     def getName(self):
         if self.resource_id.endswith("_multi"):
-            return "_" + re.sub('-','_', self.package_id)
+            return "_" + re.sub('-', '_', self.package_id)
         else:
-            return "_" + re.sub('-','_', self.name)
+            return "_" + re.sub('-', '_', self.name)
