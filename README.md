@@ -97,7 +97,33 @@ chmod 777 -R /var/tmp/GeoserverUpload
 To tell CKAN where to find the GeoserverService extension, you have to edit `/etc/ckan/default/production.ini` and add the following line (updated to your needs):
 
 ```ini
-geoserver.upload_file = http://your_server_location/GeoserverService/upload/file
+geoserver.upload_service = http://your_server_location/GeoserverService/upload/
+```
+
+This plugin has a basic authorization machanism included. To authorize yourself as a valid user, please edit the `web.xml` of the GeoserverUpload webapp in the tomcat folder:
+
+```xml
+<context-param>
+	<!-- basic authenticatio I, allows only valid ip Adresses -->
+	<param-name>AllowedIPRange</param-name>
+	<param-value>141.(30|76).*</param-value>
+</context-param>
+<context-param>
+	<!-- define the folder where temporary files are stored -->
+	<param-name>SavePath</param-name>
+	<param-value>/var/tmp/GeoserverUpload/</param-value>
+</context-param>
+<context-param>
+	<!-- basic authentication II, whoever uses this key can use this appliction -->
+	<param-name>SecretKey</param-name>
+	<param-value><!-- YourSecretPassphrase --></param-value>
+</context-param>
+```
+ 
+If you use the second methos, than you have to edit the following line to `/etc/ckan/default/production.ini` (match passphrases):
+
+```ini
+geoserver.upload_key = YourSecretPassphrase
 ```
  
 
@@ -111,7 +137,7 @@ cd /usr/lib/ckan/default/src/ckan
 
 cd /usr/lib/ckan/default
 pip install -e 'git+https://github.com/GeoinformationSystems/ckanext-geoserver.git#egg=ckanext-geoserver'
-cd ckanext-geoserver/
+cd src/ckanext-geoserver/
 pip install -r requirements.txt
 ```
 
@@ -150,7 +176,9 @@ Also requires this to be set (should already be set when following the earlier d
 
 ```ini
 ckan.datastore.write_url = 'postgresql://ckanuser:pass@localhost/datastore'
+ckan.storage.directory = /var/tmp/
 ```
+
 
 > **Caution:**
 > If your Geoserver and your CKAN run on separate machines it is mandatory to replace occurring `localhost` statements in `/etc/ckan/default/production.ini` with the IP or the DNS name of the CKAN for `ckan.datastore.write_url` and `ckan.datastore.read_url`.   
