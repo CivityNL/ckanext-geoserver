@@ -11,8 +11,10 @@ from ckan.plugins import toolkit
 import re
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
+
 
 class MultiShapeFile(object):
     resource = {}
@@ -27,26 +29,27 @@ class MultiShapeFile(object):
         "layer": None,
         "srs": None,
         "geom_extent": None
-    }
+        }
     ogr_destination = {
         "driver": None,
         "source": None,
         "layer": None,
         "srs": None,
         "geom_extent": None
-    }
+        }
 
     def __init__(self, package_id=""):
         self.package_id = package_id
         # Get the resource
-        self.resource = toolkit.get_action("package_show")(None, {"id": package_id})
+        self.resource = toolkit.get_action("package_show")(None, {
+            "id": package_id
+        })
         # Get the path to the file
         self.file_path = folder_path_from_package_shp(package_id)
         self.connection_url = config.get('ckan.datastore.write_url')
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
-        # Check that it is a valid zip file
-
+            # Check that it is a valid zip file
 
     def get_source_layer(self):
         """Get a OGRLayer for this shapefile"""
@@ -56,7 +59,7 @@ class MultiShapeFile(object):
         # A dataSource is always an array, but shapefiles are always by themselves. Get the layer
         layer = input_datasource.GetLayerByIndex(0)
         geom = layer.GetExtent()
-        geom_extent = [[geom[2],geom[0]],[geom[3],geom[1]]]
+        geom_extent = [[geom[2], geom[0]], [geom[3], geom[1]]]
         # Cache the OGR objects so they don't get cleaned up
         self.ogr_source["driver"] = input_driver
         self.ogr_source["source"] = input_datasource
@@ -80,7 +83,7 @@ class MultiShapeFile(object):
             params.group("dbname"),
             params.group("user"),
             params.group("password")
-        )
+            )
         ogr_connection_string = "PG: host=%s port=5432 dbname=%s user=%s password=%s" % connection
 
         # Generate the destination DataSource
@@ -123,7 +126,6 @@ class MultiShapeFile(object):
         # Commit it
         new_layer.CommitTransaction()
 
-
         # Cache the OGR objects so they don't get cleaned up
         self.ogr_destination["layer"] = new_layer
 
@@ -142,7 +144,6 @@ class MultiShapeFile(object):
         except Exception as ex:
             log.info(ex)
 
-
         if not layer:
             layer = self.create_destination_layer(destination_source, name)
 
@@ -152,10 +153,13 @@ class MultiShapeFile(object):
         return layer
 
     def unpublish(self):
-        conn_params = {'connection_url': self.connection_url, 'package_id': self.package_id}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'package_id': self.package_id
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
-        sql = "DROP TABLE IF EXISTS _" + re.sub('-','_', self.package_id)
+        sql = "DROP TABLE IF EXISTS _" + re.sub('-', '_', self.package_id)
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()
@@ -232,12 +236,12 @@ class MultiShapeFile(object):
         return dataSource.GetLayerByIndex(0).GetName()
 
     def table_name(self):
-        return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
+        return self.get_name().lower().replace("-", "_").replace(".", "_")  # Postgresql will have the name screwballed
 
     def getName(self):
         id = self.resource['id']
-        id = re.sub('-','_', id)
-        name = '_'+id
+        id = re.sub('-', '_', id)
+        name = '_' + id
         return name.encode('ascii', 'ignore')
 
     def output_geom(self, source):
@@ -263,4 +267,5 @@ class MultiShapeFile(object):
         else:
             def do_nothing(geom):
                 return geom
+
             return do_nothing

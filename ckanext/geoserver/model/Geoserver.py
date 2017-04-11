@@ -3,8 +3,8 @@ from geoserver.catalog import Catalog
 from pylons.config import config
 import re
 
-class Geoserver(Catalog):
 
+class Geoserver(Catalog):
     @classmethod
     def from_ckan_config(cls):
         """
@@ -25,9 +25,9 @@ class Geoserver(Catalog):
             url = url.replace('geoserver://', 'http://')
 
         # Make the connection
-        return cls(url, username=user, password=pwd, disable_ssl_certificate_validation = True)
+        return cls(url, username=user, password=pwd, disable_ssl_certificate_validation=True)
 
-    #Make this method to create workspace/namespace uri by given input if provided
+    # Make this method to create workspace/namespace uri by given input if provided
     def default_workspace(self, name=None, uri=None):
         """
         Get a default workspace -- create if it does not exist
@@ -40,7 +40,7 @@ class Geoserver(Catalog):
 
         ngds_workspace = self.get_workspace(name)
         if ngds_workspace is None:
-            ngds_workspace = self.create_workspace(name, uri+'#'+name)
+            ngds_workspace = self.create_workspace(name, uri + '#' + name)
         return ngds_workspace
 
     def get_datastore(self, workspace=None, store_name=None, layer_name=None, layer_version=None):
@@ -51,7 +51,7 @@ class Geoserver(Catalog):
         """
 
         # Extract values from ckan config file
-        datastore_url = config.get('ckan.datastore.write_url','postgresql://ckanuser:pass@localhost/datastore')
+        datastore_url = config.get('ckan.datastore.write_url', 'postgresql://ckanuser:pass@localhost/datastore')
         # Extract connection details
         pattern = "://(?P<user>.+?):(?P<pass>.+?)@(?P<host>.+?)/(?P<database>.+)$"
         details = re.search(pattern, datastore_url)
@@ -72,7 +72,7 @@ class Geoserver(Catalog):
                 user=details.group("user"),
                 passwd=details.group("pass"),
                 dbtype="postgis"
-            )
+                )
             self.save(ds)
 
         # Return datastore object

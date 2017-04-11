@@ -31,13 +31,13 @@ class MultiRasterFile(object):
     def __init__(self, package_id):
         self.package_id = package_id
         self.connection_url = config.get('ckan.datastore.write_url')
-        self.zipFileLocation = config.get('ckan.storage.directory')
+        self.zipFileLocation = config.get('ckan.storage.directory', '/var/tmp/')
         self.descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
 
     def unpublish(self):
-        #TODO: service to delete file in geoserver file system?
+        # TODO: service to delete file in geoserver file system?
         return True
 
     def publish(self):
@@ -52,7 +52,9 @@ class MultiRasterFile(object):
         if not path.exists(self.zipFileLocation):
             makedirs(self.zipFileLocation)
 
-        extras = toolkit.get_action("package_show")(None, {"id": self.package_id}).get("extras", [])
+        extras = toolkit.get_action("package_show")(None, {
+            "id": self.package_id
+        }).get("extras", [])
 
         for extra in extras:
             key = extra.get('key', None)
@@ -80,7 +82,9 @@ class MultiRasterFile(object):
 
         # copy all geotiffs from schema descriptor into tmp folder
         for resource in resource_name:
-            url_ = toolkit.get_action("resource_show")(None, {"id": resource}).get("url", {})
+            url_ = toolkit.get_action("resource_show")(None, {
+                "id": resource
+            }).get("url", {})
             label = url_.rsplit('/', 1)[-1]
             tmpFile = urllib2.urlopen(url_)
             with open(self.zipFileLocation + label, 'wb') as fp:

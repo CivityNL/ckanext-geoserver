@@ -60,7 +60,9 @@ class RasterFile(object):
             return False
 
         valid_endings = ["geotiff"]
-        for resource in toolkit.get_action("package_show")(None, {"id": self.package_id}).get('resources', []):
+        for resource in toolkit.get_action("package_show")(None, {
+            "id": self.package_id
+        }).get('resources', []):
             for valid in valid_endings:
                 if resource.get("format", {}) == valid:
                     url = resource.get("url", {})
@@ -81,9 +83,12 @@ class RasterFile(object):
 
         testfile = tmpFolder + label
 
-        files = {'file': (testfile, open(testfile, "rb"), 'image/tiff', {"Expires": "0"}),
-                 'foldername': self.package_id
-                 }
+        files = {
+            'file': (testfile, open(testfile, "rb"), 'image/tiff', {
+                "Expires": "0"
+            }),
+            'foldername': self.package_id
+            }
         r = requests.post(self.upload_file_location, files=files)
         return True
 

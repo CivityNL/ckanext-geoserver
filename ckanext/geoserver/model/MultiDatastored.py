@@ -46,8 +46,8 @@ class MultiDatastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                    #new_val=dirty.replace(" ","_")
-                )
+                    # new_val=dirty.replace(" ","_")
+                    )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -64,8 +64,8 @@ class MultiDatastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                    #new_val=dirty.replace("_"," ")
-                )
+                    # new_val=dirty.replace("_"," ")
+                    )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -73,7 +73,10 @@ class MultiDatastored(object):
                 pass
 
     def unpublish(self):
-        conn_params = {'connection_url': self.connection_url, 'package_id': self.package_id}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'package_id': self.package_id
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
         sql = "DROP MATERIALIZED VIEW IF EXISTS " + self.getName()
@@ -89,7 +92,9 @@ class MultiDatastored(object):
         Resource in datastore database is checked for Geometry field. If the field doesn't exists then calculates the
         geometry field value and creates it in the table.
         """
-        pkg = toolkit.get_action('package_show')(None, {'id': self.package_id})
+        pkg = toolkit.get_action('package_show')(None, {
+            'id': self.package_id
+        })
         extras = pkg.get('extras', [])
 
         for extra in extras:
@@ -97,7 +102,6 @@ class MultiDatastored(object):
             if key == self.descriptor_name:
                 schema_descriptor = json.loads(extra.get('value'))
                 break
-
 
         obs = []
         geom = []
@@ -112,7 +116,6 @@ class MultiDatastored(object):
                 for ids in member.get('resource_name'):
                     obs.append(ids)
 
-
         if self.join_key is None:
             for geom_field in geom_fields:
                 for obs_field in obs_fields:
@@ -123,19 +126,27 @@ class MultiDatastored(object):
             raise toolkit.ObjectNotFound(toolkit._("Mutliple geometry files found"))
 
         # Get the connection parameters for the datastore
-        conn_params = {'connection_url': self.connection_url, 'resource_id': geom[0]}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'resource_id': geom[0]
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
         try:
             # This will fail with a ProgrammingError if the table does not exist
-            fields = db._get_fields({"connection": connection}, conn_params)
+            fields = db._get_fields({
+                                        "connection": connection
+                                    }, conn_params)
         except ProgrammingError as ex:
             raise toolkit.ObjectNotFound(toolkit._("Resource not found in datastore database"))
 
         # If there is not already a geometry column...
-        if not True in set( col['id'] == self.geo_col for col in fields ):
+        if not True in set(col['id'] == self.geo_col for col in fields):
             # ... append one
-            fields.append({'id': self.geo_col, 'type': u'geometry'})
+            fields.append({
+                              'id': self.geo_col,
+                              'type': u'geometry'
+                          })
 
             self.clean_fields(connection, fields)
             # SQL to create the geometry column
@@ -161,13 +172,14 @@ class MultiDatastored(object):
                     postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
                 else:
                     postgresdate = self.convertIsoToPostgres('default')
-                selectsql += "to_timestamp(CAST(\""+geom[0]+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                selectsql += "to_timestamp(CAST(\"" + geom[0] + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as text), \'" + postgresdate + "\') as \"geometry." + self.clean_name(
+                    fields.get('field_id'), '_') + "\", "
             else:
-                selectsql += "\""+geom[0]+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                selectsql += "\"" + geom[0] + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as \"geometry." + self.clean_name(fields.get('field_id'), '_') + "\", "
                 if fields.get('field_id').lower() == self.join_key:
                     geom_key = fields.get('field_id')
 
-        selectsql += "\""+geom[0]+"\".\""+self.geo_col+"\" as \"geometry."+self.geo_col+"\", "
+        selectsql += "\"" + geom[0] + "\".\"" + self.geo_col + "\" as \"geometry." + self.geo_col + "\", "
 
         for fields in obs_fields:
             if fields.get('field_type').lower() == 'date':
@@ -175,23 +187,24 @@ class MultiDatastored(object):
                     postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
                 else:
                     postgresdate = self.convertIsoToPostgres('default')
-                selectsql += "to_timestamp(CAST(observations.\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \"geometry."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                selectsql += "to_timestamp(CAST(observations.\"" + self.clean_name(fields.get('field_id'), '_') + "\" as text), \'" + postgresdate + "\') as \"geometry." + self.clean_name(
+                    fields.get('field_id'), '_') + "\", "
             else:
-                selectsql += "observations.\"" + self.clean_name(fields.get('field_id'),'_') + "\" as \"observations."+self.clean_name(fields.get('field_id'),'_')+"\", "
+                selectsql += "observations.\"" + self.clean_name(fields.get('field_id'), '_') + "\" as \"observations." + self.clean_name(fields.get('field_id'), '_') + "\", "
                 if fields.get('field_id').lower() == self.join_key:
                     obs_key = fields.get('field_id')
 
         selectsql = selectsql[:-2] + " "
         selectsql += "FROM "
-        selectsql += "public.\""+geom[0]+"\" "
+        selectsql += "public.\"" + geom[0] + "\" "
 
         selectsql += "INNER JOIN ("
 
         for entry in obs:
-            selectsql += "SELECT * FROM public.\""+entry+"\" UNION ALL "
+            selectsql += "SELECT * FROM public.\"" + entry + "\" UNION ALL "
 
         selectsql = selectsql[:-11] + ") as observations "
-        selectsql += "ON public.\""+geom[0]+"\".\""+geom_key+"\" = observations.\""+obs_key+"\""
+        selectsql += "ON public.\"" + geom[0] + "\".\"" + geom_key + "\" = observations.\"" + obs_key + "\""
 
         sql = "DROP MATERIALIZED VIEW IF EXISTS \"%s\"; CREATE MATERIALIZED VIEW \"%s\" AS " + selectsql
         # sql = "DROP VIEW IF EXISTS \"_%s\"; CREATE VIEW \"_%s\" AS " + selectsql
@@ -218,15 +231,15 @@ class MultiDatastored(object):
         return postgres
 
     def clean_name(self, name, form):
-        clean = re.sub('µ','micro_', name)
-        clean = re.sub('/','_per_', clean)
+        clean = re.sub('µ', 'micro_', name)
+        clean = re.sub('/', '_per_', clean)
         clean = re.sub('[][}{()?$%&!#*^°@,;: ]', form, clean)
         if re.match('^[0-9]', clean):
-            clean = "_"+clean
+            clean = "_" + clean
         return clean
 
     def table_name(self):
         return self.resource_id
 
     def getName(self):
-        return "_" + re.sub('-','_', self.package_id)
+        return "_" + re.sub('-', '_', self.package_id)

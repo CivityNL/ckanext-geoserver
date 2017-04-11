@@ -9,6 +9,7 @@ from pylons import config
 from ckan.plugins import toolkit
 import re
 
+
 class Shapefile(object):
     resource = {}
     file_path = ""
@@ -22,19 +23,21 @@ class Shapefile(object):
         "layer": None,
         "srs": None,
         "geom_extent": None
-    }
+        }
     ogr_destination = {
         "driver": None,
         "source": None,
         "layer": None,
         "srs": None,
         "geom_extent": None
-    }
+        }
 
     def __init__(self, resource_id=""):
         self.resource_id = resource_id
         # Get the resource
-        self.resource = toolkit.get_action("resource_show")(None, {"id": resource_id})
+        self.resource = toolkit.get_action("resource_show")(None, {
+            "id": resource_id
+        })
         # Get the path to the file
         url = self.resource["url"]
         self.connection_url = config.get('ckan.datastore.write_url')
@@ -85,7 +88,7 @@ class Shapefile(object):
         # A dataSource is always an array, but shapefiles are always by themselves. Get the layer
         layer = input_datasource.GetLayerByIndex(0)
         geom = layer.GetExtent()
-        geom_extent = [[geom[2],geom[0]],[geom[3],geom[1]]]
+        geom_extent = [[geom[2], geom[0]], [geom[3], geom[1]]]
         # Cache the OGR objects so they don't get cleaned up
         self.ogr_source["driver"] = input_driver
         self.ogr_source["source"] = input_datasource
@@ -109,7 +112,7 @@ class Shapefile(object):
             params.group("dbname"),
             params.group("user"),
             params.group("password")
-        )
+            )
         ogr_connection_string = "PG: host=%s port=5432 dbname=%s user=%s password=%s" % connection
 
         # Generate the destination DataSource
@@ -175,10 +178,13 @@ class Shapefile(object):
         return layer
 
     def unpublish(self):
-        conn_params = {'connection_url': self.connection_url, 'package_id': self.resource_id}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'package_id': self.resource_id
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
-        sql = "DROP TABLE IF EXISTS _" + re.sub('-','_', self.resource_id)
+        sql = "DROP TABLE IF EXISTS _" + re.sub('-', '_', self.resource_id)
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()
@@ -259,12 +265,12 @@ class Shapefile(object):
         return dataSource.GetLayerByIndex(0).GetName()
 
     def table_name(self):
-        return self.get_name().lower().replace("-", "_").replace(".", "_") # Postgresql will have the name screwballed
+        return self.get_name().lower().replace("-", "_").replace(".", "_")  # Postgresql will have the name screwballed
 
     def getName(self):
         id = self.resource['id']
-        id = re.sub('-','_', id)
-        name = '_'+id
+        id = re.sub('-', '_', id)
+        name = '_' + id
         return name.encode('ascii', 'ignore')
 
     def output_geom(self, source):
@@ -290,4 +296,5 @@ class Shapefile(object):
         else:
             def do_nothing(geom):
                 return geom
+
             return do_nothing

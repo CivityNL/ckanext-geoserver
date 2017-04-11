@@ -26,7 +26,9 @@ class Datastored(object):
         self.lng_col = lng_field
         self.connection_url = config.get('ckan.datastore.write_url')
         self.descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
-        resource = toolkit.get_action('resource_show')(None, {'id': self.resource_id})
+        resource = toolkit.get_action('resource_show')(None, {
+            'id': self.resource_id
+        })
         self.package_id = resource.get('package_id', None)
         if not self.connection_url:
             raise ValueError(toolkit._("Expected datastore write url to be configured in development.ini"))
@@ -46,7 +48,7 @@ class Datastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                )
+                    )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -63,7 +65,7 @@ class Datastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                )
+                    )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -71,10 +73,13 @@ class Datastored(object):
                 pass
 
     def unpublish(self):
-        conn_params = {'connection_url': self.connection_url, 'package_id': self.resource_id}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'package_id': self.resource_id
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
-        sql = "DROP MATERIALIZED VIEW IF EXISTS _" + re.sub('-','_', self.resource_id)
+        sql = "DROP MATERIALIZED VIEW IF EXISTS _" + re.sub('-', '_', self.resource_id)
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()
@@ -89,19 +94,27 @@ class Datastored(object):
         geometry field value and creates it in the table.
         """
         # Get the connection parameters for the datastore
-        conn_params = {'connection_url': self.connection_url, 'resource_id': self.resource_id}
+        conn_params = {
+            'connection_url': self.connection_url,
+            'resource_id': self.resource_id
+        }
         engine = db._get_engine(conn_params)
         connection = engine.connect()
         try:
             # This will fail with a ProgrammingError if the table does not exist
-            fields = db._get_fields({"connection": connection}, conn_params)
+            fields = db._get_fields({
+                                        "connection": connection
+                                    }, conn_params)
         except ProgrammingError as ex:
             raise toolkit.ObjectNotFound(toolkit._("Resource not found in datastore database"))
 
         # If there is not already a geometry column...
-        if not True in set( col['id'] == self.geo_col for col in fields ):
+        if not True in set(col['id'] == self.geo_col for col in fields):
             # ... append one
-            fields.append({'id': self.geo_col, 'type': u'geometry'})
+            fields.append({
+                              'id': self.geo_col,
+                              'type': u'geometry'
+                          })
 
             self.clean_fields(connection, fields)
             # SQL to create the geometry column
@@ -120,7 +133,9 @@ class Datastored(object):
             connection.execute(sql)
             trans.commit()
 
-        pkg = toolkit.get_action('package_show')(None, {'id': self.package_id})
+        pkg = toolkit.get_action('package_show')(None, {
+            'id': self.package_id
+        })
         extras = pkg.get('extras', [])
 
         for extra in extras:
@@ -130,22 +145,23 @@ class Datastored(object):
                 break
 
         description = schema_descriptor.get("members")[0]
-        sql = "DROP MATERIALIZED VIEW IF EXISTS \""+self.view_name()+"\"; CREATE MATERIALIZED VIEW \""+self.view_name()+"\" AS SELECT "
+        sql = "DROP MATERIALIZED VIEW IF EXISTS \"" + self.view_name() + "\"; CREATE MATERIALIZED VIEW \"" + self.view_name() + "\" AS SELECT "
         for fields in description.get('fields'):
             if fields.get('field_type').lower() == 'date':
                 if fields.get('date_format') is not None:
                     postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
                 else:
                     postgresdate = self.convertIsoToPostgres('default')
-                sql += "to_timestamp(CAST(\""+self.table_name()+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as text), \'"+postgresdate+"\') as \""+self.clean_name(fields.get('field_id'),'_')+"\", "
+                sql += "to_timestamp(CAST(\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as text), \'" + postgresdate + "\') as \"" + self.clean_name(
+                    fields.get('field_id'), '_') + "\", "
             else:
-                sql += "\""+self.table_name()+"\".\""+self.clean_name(fields.get('field_id'),'_')+"\" as \""+self.clean_name(fields.get('field_id'),'_')+"\", "
+                sql += "\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as \"" + self.clean_name(fields.get('field_id'), '_') + "\", "
 
-        sql += "\""+self.table_name()+"\".\""+self.geo_col+"\" as \""+self.geo_col+"\", "
+        sql += "\"" + self.table_name() + "\".\"" + self.geo_col + "\" as \"" + self.geo_col + "\", "
 
         sql = sql[:-2] + " "
 
-        sql += "FROM \""+self.table_name()+"\""
+        sql += "FROM \"" + self.table_name() + "\""
         trans = connection.begin()
         connection.execute(sql)
         trans.commit()
@@ -167,15 +183,15 @@ class Datastored(object):
         return postgres
 
     def view_name(self):
-        return "_"+re.sub('-','_', self.resource_id)
+        return "_" + re.sub('-', '_', self.resource_id)
 
     def table_name(self):
         return self.resource_id
 
     def clean_name(self, name, form):
-        clean = re.sub('µ','micro_', name)
-        clean = re.sub('/','_per_', clean)
+        clean = re.sub('µ', 'micro_', name)
+        clean = re.sub('/', '_per_', clean)
         clean = re.sub('[][}{()?$%&!#*^°@,;: ]', form, clean)
         if re.match('^[0-9]', clean):
-            clean = "_"+clean
+            clean = "_" + clean
         return clean

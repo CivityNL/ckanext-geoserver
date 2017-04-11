@@ -2,6 +2,7 @@ from owslib.wms import WebMapService
 from owslib.wfs import WebFeatureService
 from osgeo import ogr
 
+
 class HandleWMS():
     """
     Processor for WMS resources.  Requires a getCapabilities URL for the WMS and a WMS version passed in as a string.
@@ -72,7 +73,8 @@ class HandleWMS():
             'srs': srs,
             'format': format,
             'service_url': service_url
-        }
+            }
+
 
 class HandleWFS():
     """
@@ -90,8 +92,8 @@ class HandleWFS():
     # Return a specific service URL, getFeature is default
     def get_service_url(self, operation='{http://www.opengis.net/wfs}GetFeature', method='{http://www.opengis.net/wfs}Get'):
         if self.version == "1.1.0":
-            operation="GetFeature"
-            method="Get"
+            operation = "GetFeature"
+            method = "Get"
 
         return self.wfs.getOperationByName(operation).methods[method]['url']
 
@@ -116,14 +118,21 @@ class HandleWFS():
     def build_url(self, typename=None, method='{http://www.opengis.net/wfs}Get', operation='{http://www.opengis.net/wfs}GetFeature', maxFeatures=None):
 
         if self.version == "1.1.0":
-            operation="GetFeature"
-            method="Get"
+            operation = "GetFeature"
+            method = "Get"
 
         service_url = self.wfs.getOperationByName(operation).methods[method]['url']
-        request = {'service': 'WFS', 'version': self.version}
+        request = {
+            'service': 'WFS',
+            'version': self.version
+        }
 
         if self.version == "1.1.0":
-            request = {'service': 'WFS', 'version': self.version, 'request': 'GetFeature'}
+            request = {
+                'service': 'WFS',
+                'version': self.version,
+                'request': 'GetFeature'
+            }
 
         try:
             assert len(typename) > 0
@@ -132,9 +141,10 @@ class HandleWFS():
             request['typename'] = ','.join('ERROR_HERE')
             pass
 
-        if maxFeatures: request['maxfeatures'] = str(maxFeatures)
+        if maxFeatures:
+            request['maxfeatures'] = str(maxFeatures)
 
-        encoded_request = "&".join("%s=%s" % (key,value) for (key,value) in request.items())
+        encoded_request = "&".join("%s=%s" % (key, value) for (key, value) in request.items())
         url = service_url + "&" + encoded_request
 
         if self.version == "1.1.0":
