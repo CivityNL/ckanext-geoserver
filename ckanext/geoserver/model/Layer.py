@@ -53,7 +53,6 @@ class Layer(object):
         self.name = layer_name
         self.layer_version = layer_version
         self.username = username
-
         if resource_id.endswith("_multi"):
             self.file_resource = toolkit.get_action("package_show")(None, {
                 "id": package_id

@@ -92,17 +92,13 @@ class MultiRasterFile(object):
 
         # create indexer.properties file
         with open(self.zipFileLocation + "/indexer.properties", "w+") as f:
-            f.write("AbsolutePath=true\n")
             f.write("TimeAttribute=time\n")
-            f.write("AdditionalDomainAttributes=run\n")
-            f.write("Schema= the_geom:Polygon,location:String,time:java.util.Date,run:Integer\n")
-            f.write(
-                "PropertyCollectors=TimestampFileNameExtractorSPI[timeregex](time),StringFileNameExtractorSPI[runtime](run)\n")
-            f.write("CheckAuxiliaryMetadata=true\n")
+            f.write("Schema=*the_geom:Polygon,location:String,time:java.util.Date\n")
+            f.write("PropertyCollectors=TimestampFileNameExtractorSPI[timeregex](time)\n")
 
         # create timeregex.properties file based on regex
         with open(self.zipFileLocation + "/timeregex.properties", "w+") as f:
-            f.write("regex=" + timeregex)
+            f.write("regex=" + timeregex+"\n")
 
         # create zip archive
         with closing(ZipFile(self.zipFileLocation + "/" + self.package_id + ".zip", "w", ZIP_DEFLATED)) as z:
@@ -111,7 +107,10 @@ class MultiRasterFile(object):
                 for fn in files:
                     if not fn.endswith(".zip"):
                         absfn = os.path.join(root, fn)
-                        zfn = absfn[len(self.zipFileLocation) + len(os.sep):]
+                        if self.zipFileLocation.endswith(os.sep):
+                            zfn = absfn[len(self.zipFileLocation):]
+                        else:
+                            zfn = absfn[len(self.zipFileLocation) + len(os.sep):]
                         z.write(absfn, zfn)
 
         # save zipFile Location
