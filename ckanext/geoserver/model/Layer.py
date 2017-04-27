@@ -108,15 +108,14 @@ class Layer(object):
         # '**' unpacks the kwargs dictionary which can contain an arbitrary number of arguments
         self.data = cls(**kwargs)
 
-        # Spatialize
-        if not self.data.publish():
-            # Spatialization failed
-            raise Exception(toolkit._("Spatialization failed."))
-
     def create(self):
         """
         Creates the new layer to Geoserver and then creates the resources in Package(CKAN).
         """
+        # Spatialize
+        if not self.data.publish():
+            # Spatialization failed
+            raise Exception(toolkit._("Spatialization failed."))
         self.create_layer()
         self.create_geo_resources()
         self.add_sld_if_exists()
