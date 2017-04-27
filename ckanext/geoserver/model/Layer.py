@@ -250,33 +250,32 @@ class Layer(object):
         def capabilities_url(service_url, workspace, layer, service, version):
 
             try:
-                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities&typeName=%s:%s" % (workspace, service, version, workspace, layer)
+                specifications = "/%s/ows?service=%s&version=%s&request=GetCapabilities#%s" % (workspace, service, version, layer)
                 return service_url.replace("/rest", specifications)
             except:
                 service = service.lower()
                 specifications = "/" + service + "?request=GetCapabilities"
                 return service_url.replace("/rest", specifications)
 
-        def ckanOGCServicesURL(serviceUrl):
-            newServiceUrl = serviceUrl
-            try:
-                siteUrl = config.get('ckan.site_url', None)
-
-                if siteUrl:
-                    encodedURL = urllib.quote_plus(serviceUrl, '')
-                    newServiceUrl = siteUrl + "/geoserver/get-ogc-services?url=" + encodedURL + "&workspace=" + self.workspace_name
-
-            except:
-                return serviceUrl
-
-            return newServiceUrl
+        # def ckanOGCServicesURL(serviceUrl):
+        #     newServiceUrl = serviceUrl
+        #     try:
+        #         siteUrl = config.get('ckan.site_url', None)
+        #
+        #         if siteUrl:
+        #             encodedURL = urllib.quote_plus(serviceUrl, '')
+        #             newServiceUrl = siteUrl + "/geoserver/get-ogc-services?url=" + encodedURL + "&workspace=" + self.workspace_name
+        #
+        #     except:
+        #         return serviceUrl
+        #
+        #     return newServiceUrl
 
         # WMS Resource Creation, layer: is important for ogcpreview ext used for WMS, and feature_type is used for WFS in ogcpreview ext
         data_dict = {
             'package_id': self.package_id,
             'parent_resource': self.file_resource['id'],
-            'url': ckanOGCServicesURL(
-                capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WMS', '1.1.1')),
+            'url': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WMS', '1.1.1'),
             'description': 'WMS for %s' % self.file_resource[
                 'name'],
             'distributor': self.file_resource.get("distributor", json.dumps({
@@ -286,11 +285,10 @@ class Layer(object):
             'protocol': 'WMS',
             'format': 'WMS',
             'feature_type': "%s:%s" % (
-                self.store.workspace.name, self.name),
-            'layer': "%s" % self.name,
+                self.store.workspace.name, self.getName()),
+            'layer': "%s" % self.getName(),
             'resource_format': 'data-service',
-            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name,
-                                        self.name, 'WMS', '1.1.1'),
+            'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WMS', '1.1.1'),
             }
         self.wms_resource = toolkit.get_action('resource_create')(context, data_dict)
 
@@ -300,8 +298,7 @@ class Layer(object):
                 {
                     "package_id": self.package_id,
                     'parent_resource': self.file_resource['id'],
-                    "url": ckanOGCServicesURL(
-                        capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WCS', '1.1.1')),
+                    "url": capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WCS', '1.1.1'),
                     "description": "WCS for %s" % self.file_resource[
                         "name"],
                     'distributor': self.file_resource.get("distributor", json.dumps({
@@ -310,11 +307,9 @@ class Layer(object):
                         })),
                     "protocol": "WCS",
                     "format": "WCS",
-                    "feature_type": "%s:%s" % (
-                        self.store.workspace.name, self.name),
+                    "feature_type": "%s:%s" % (self.store.workspace.name, self.getName()),
                     'resource_format': 'data-service',
-                    'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WCS',
-                                                '1.1.1')
+                    'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WCS', '1.1.1')
                     })
             self.wcs_resource = toolkit.get_action('resource_create')(context, data_dict)
 
@@ -325,8 +320,7 @@ class Layer(object):
             data_dict.update({
                 "package_id": self.package_id,
                 'parent_resource': self.file_resource['id'],
-                "url": ckanOGCServicesURL(
-                    capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS', '1.1.0')),
+                "url": capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WFS', '1.1.0'),
                 "description": "WFS for %s" % self.file_resource[
                     "name"],
                 'distributor': self.file_resource.get("distributor", json.dumps({
@@ -336,10 +330,9 @@ class Layer(object):
                 "protocol": "WFS",
                 "format": "WFS",
                 "feature_type": "%s:%s" % (
-                    self.store.workspace.name, self.name),
+                    self.store.workspace.name, self.getName()),
                 'resource_format': 'data-service',
-                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.name, 'WFS',
-                                            '1.1.0'),
+                'url_ogc': capabilities_url(self.geoserver.service_url, self.store.workspace.name, self.getName(), 'WFS', '1.1.0'),
                 })
             self.wfs_resource = toolkit.get_action('resource_create')(context, data_dict)
 
