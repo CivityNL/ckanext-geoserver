@@ -20,6 +20,7 @@ class GeoserverPlugin(p.SingletonPlugin):
     p.implements(p.ITemplateHelpers, inherit=True)
     p.implements(p.IDatasetForm)
     p.implements(p.IRoutes, inherit=True)
+    p.implements(p.IPackageController, inherit=True)
 
     def update_config(self, config):
         p.toolkit.add_template_directory(config, 'templates')
@@ -34,6 +35,20 @@ class GeoserverPlugin(p.SingletonPlugin):
         map.connect('geoserver_update_package_published_status', '/geoserver/update-package-published-status', controller=controller, action='updatePackagePublishedStatus')
 
         return map
+
+    # IPackageController
+    def after_update(self, context, pkg_dict):
+        # if extra field published = true:
+        extras = pkg_dict.get('extras', [])
+        for extra in extras:
+            key = extra.get('key', None)
+            if key == 'published':
+                if extra.get('value', None) == "true":
+                    #   1. unpublish via API
+                    action.unpublish_ogc(context, pkg_dict)
+                    #   2. publish via API
+                    action.publish_ogc(context, pkg_dict)
+                    break
 
 
     # Functionality that this plugin provides through the Action API
