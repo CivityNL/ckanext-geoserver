@@ -158,7 +158,7 @@ def update_package_published_status(package_id, status):
 
 def geoserver_rasters_to_publish(package_id):
     '''
-    Ckeck if the given package fulfils the minimum needs to publish the shapefile. This is a check on the existence of the mandatory file extensions .shp, .shx, .dbf
+    Ckeck if the given package fulfils the minimum needs to publish the rasterfile.
     '''
     valid_endings = ["geotiff"]
 

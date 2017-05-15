@@ -99,7 +99,7 @@ class Layer(object):
                     })
             elif resource_id == 'shapefile_multi':
                 cls = MultiShapeFile
-            elif resource_id == "schema_descriptor_timeseries_multi":
+            elif resource_id == 'schema_descriptor_timeseries_multi':
                 cls = MultiRasterFile
             else:
                 # The resource cannot be spatialized
