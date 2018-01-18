@@ -3,7 +3,6 @@ from geoserver.catalog import Catalog
 from pylons.config import config
 import re
 
-
 class Geoserver(Catalog):
     @classmethod
     def from_ckan_config(cls):
@@ -63,6 +62,19 @@ class Geoserver(Catalog):
         # Check if the datastore exists, create if it does not exist
         try:
             ds = self.get_store(store_name, workspace)
+            if ds is None:
+                ds = self.create_datastore(store_name, workspace)
+                ds.connection_parameters.update(
+                    host=details.group("host"),
+                    port="5432",
+                    database=details.group("database"),
+                    user=details.group("user"),
+                    passwd=details.group("pass"),
+                    dbtype="postgis"
+                )
+                self.save(ds)
+
+
         except Exception as ex:
             ds = self.create_datastore(store_name, workspace)
             ds.connection_parameters.update(

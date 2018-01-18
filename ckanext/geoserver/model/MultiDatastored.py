@@ -1,6 +1,6 @@
 # coding=utf-8
 from pylons import config
-import ckanext.datastore.db as db
+import ckanext.datastore.backend.postgres as db
 from ckan.plugins import toolkit
 from sqlalchemy.exc import ProgrammingError
 

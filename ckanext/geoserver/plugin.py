@@ -12,8 +12,8 @@ import logic.converters as converters
 log = logging.getLogger(__name__)
 _get_or_bust = logic.get_or_bust
 
-class GeoserverPlugin(p.SingletonPlugin):
 
+class GeoserverPlugin(p.SingletonPlugin):
     p.implements(p.IConfigurer)
     p.implements(p.IActions)
     p.implements(p.IAuthFunctions)
@@ -31,25 +31,34 @@ class GeoserverPlugin(p.SingletonPlugin):
         controller = 'ckanext.geoserver.controllers.ogc:OgcController'
         map.connect('geoserver_publish_ogc', '/geoserver/publish-ogc', controller=controller, action='publishOGC')
         map.connect('geoserver_unpublish_ogc', '/geoserver/unpublish-ogc', controller=controller, action='unpublishOGC')
-        map.connect('geoserver_ogc_get_capabilities', '/geoserver/get-ogc-services', controller=controller, action='getOGCServices')
-        map.connect('geoserver_update_package_published_status', '/geoserver/update-package-published-status', controller=controller, action='updatePackagePublishedStatus')
+        map.connect('geoserver_ogc_get_capabilities', '/geoserver/get-ogc-services', controller=controller,
+                    action='getOGCServices')
+        map.connect('geoserver_update_package_published_status', '/geoserver/update-package-published-status',
+                    controller=controller, action='updatePackagePublishedStatus')
 
         return map
 
     # IPackageController
     def after_update(self, context, pkg_dict):
+        log.info("after_update")
+
         # if extra field published = true:
         extras = pkg_dict.get('extras', [])
         for extra in extras:
             key = extra.get('key', None)
             if key == 'published':
                 if extra.get('value', None) == "true":
+                    log.info("published = true   || Calling unpublish_ogc")
                     #   1. unpublish via API
-                    action.unpublish_ogc(context, pkg_dict)
+                    data_dict = {
+                        'package_id': pkg_dict.get('id', None)
+                    }
+                    # action.unpublish_ogc(context, data_dict)
+                    log.info("Calling publish_ogc")
                     #   2. publish via API
-                    action.publish_ogc(context, pkg_dict)
+                    # action.publish_ogc(context, data_dict)
+                    log.info("Ending after_update")
                     break
-
 
     # Functionality that this plugin provides through the Action API
     def get_actions(self):

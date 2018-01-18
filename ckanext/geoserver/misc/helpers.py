@@ -9,6 +9,7 @@ from os import path
 from os import makedirs
 import shutil
 
+
 def check_published(resource):
     """
     Checks whether given resource is already spatialized. If spatialized returns True otherwise False.
@@ -21,17 +22,19 @@ def check_published(resource):
         if 'protocol' in resource.extras and 'parent_resource' in resource.extras:
             extras = resource.extras
             try:
-                toolkit.get_action('resource_show')(None, { 'id':resource.id,'for-view':True })
+                toolkit.get_action('resource_show')(None, {'id': resource.id, 'for-view': True})
             except (NotFound):
                 continue
 
-            if extras['parent_resource'] == resource_id and ( extras['protocol'].lower() == 'wms' or extras['ogc_type'].lower() == 'wfs'):
+            if extras['parent_resource'] == resource_id and (
+                    extras['protocol'].lower() == 'wms' or extras['ogc_type'].lower() == 'wfs'):
                 print resource.state
-                if resource.state !='active':
+                if resource.state != 'active':
                     return False
                 spatialized = True
                 break
     return spatialized
+
 
 def file_path_from_url(url):
     """
@@ -41,6 +44,7 @@ def file_path_from_url(url):
     label = re.match(pattern, url).group("label")
     return get_url_for_file(urllib2.unquote(label))
 
+
 def file_path_from_url_shp(url):
     """
     Given a file's URL, find the file itself on this system
@@ -48,10 +52,11 @@ def file_path_from_url_shp(url):
     tmpFolder = "/var/tmp/"
     label = url.rsplit('/', 1)[-1]
     tmpFile = urllib2.urlopen(url)
-    with open(tmpFolder+label, 'wb') as fp:
+    with open(tmpFolder + label, 'wb') as fp:
         shutil.copyfileobj(tmpFile, fp)
 
-    return tmpFolder+label
+    return tmpFolder + label
+
 
 def folder_path_from_package_shp(package_id):
     """
@@ -59,8 +64,8 @@ def folder_path_from_package_shp(package_id):
     """
     required = [".shp", ".shx", ".dbf"]
     optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
-    valid_endings = required+optional
-    tmpFolder = "/var/tmp/"+package_id+"/"
+    valid_endings = required + optional
+    tmpFolder = "/var/tmp/" + package_id + "/"
     if not path.exists(tmpFolder):
         makedirs(tmpFolder)
 
@@ -72,11 +77,11 @@ def folder_path_from_package_shp(package_id):
         pattern = "^(?P<protocol>.+?)://(?P<host>.+?)/.+/(?P<label>.+)$"
         label = url.rsplit('/', 1)[-1]
         tmpFile = urllib2.urlopen(url)
-        with open(tmpFolder+label, 'wb') as fp:
+        with open(tmpFolder + label, 'wb') as fp:
             shutil.copyfileobj(tmpFile, fp)
 
-
     return tmpFolder
+
 
 def get_url_for_file(label):
     """
@@ -86,10 +91,11 @@ def get_url_for_file(label):
     ofs = storage.get_ofs()
     return ofs.get_url(bucket, label).replace("file://", "")
 
+
 def check_descriptor_only():
-    '''
+    """
     Return the config option "geoserver.descriptor_only"
-    '''
+    """
     rd_only = config.get('geoserver.descriptor_only', 'true')
     if rd_only is not None:
         if rd_only == 'true':
@@ -98,20 +104,22 @@ def check_descriptor_only():
             return False
     return None
 
+
 def get_descriptor_name():
-    '''
+    """
     Return the config option "geoserver.descriptor_name"
-    '''
+    """
     descriptor_name = config.get('geoserver.descriptor_name', 'schema_descriptor')
     return descriptor_name
 
+
 def shapefile_publishing_requirements_fulfiled(package_id):
-    '''
+    """
     Ckeck if the given package fulfils the minimum needs to publish the shapefile. This is a check on the existence of the mandatory file extensions .shp, .shx, .dbf
-    '''
+    """
     required = [".shp", ".shx", ".dbf"]
     optional = [".prj", ".sbn", ".sbx", ".fbn", ".fbx", ".ain", ".aih", ".ixs", ".mxs", ".atx", ".cpg", ".xml", ".fix"]
-    valid_endings = required+optional
+    valid_endings = required + optional
 
     extensions = []
     for resource in toolkit.get_action("package_show")(None, {"id": package_id}).get('resources', []):
@@ -125,13 +133,16 @@ def shapefile_publishing_requirements_fulfiled(package_id):
         if len([ext for ext in extensions if ext in optional]) == len(extensions) - len(required):
             return True
 
+
 def update_package_published_status(package_id, status):
-    '''
-    Updates ths published status for a given package_id
+    """
+    Updates the published status for a given package_id
     status:
         True -> set published status to true
         False -> set published status to false
-    '''
+    """
+
+    # TODO Check previous value instead of always creating a new one.
 
     pkg = toolkit.get_action('package_show')(None, {'id': package_id})
     extras = pkg.get('extras', [])
@@ -143,23 +154,24 @@ def update_package_published_status(package_id, status):
     tags = pkg.get('tags')
 
     if status:
-        tags.append({'name':'published'})
+        tags.append({'name': 'published'})
         new_dict = {u'key': u'published', u'value': u'true'}
     else:
         for tag in tags:
             if tag['name'] == "published":
                 tags.remove(tag)
         new_dict = {u'key': u'published', u'value': u'false'}
-    extras.insert(0,new_dict)
+    extras.insert(0, new_dict)
 
-    toolkit.get_action('package_patch')(None, {'id': package_id, 'extras':extras, 'tags': tags})
+    toolkit.get_action('package_patch')(None, {'id': package_id, 'extras': extras, 'tags': tags})
 
     return True
 
+
 def geoserver_rasters_to_publish(package_id):
-    '''
+    """
     Ckeck if the given package fulfils the minimum needs to publish the rasterfile.
-    '''
+    """
     valid_endings = ["geotiff"]
 
     # Look at the file extensions in the zipfile
@@ -171,5 +183,5 @@ def geoserver_rasters_to_publish(package_id):
 
     for ending in extensions:
         for valid in valid_endings:
-            if ending==valid:
+            if ending == valid:
                 return True

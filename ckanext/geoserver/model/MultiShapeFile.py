@@ -1,7 +1,7 @@
 from osgeo import ogr
 from osgeo import osr
 import zipfile
-import ckanext.datastore.db as db
+import ckanext.datastore.backend.postgres as db
 from os import path
 from re import search
 from ckanext.geoserver.misc.helpers import file_path_from_url_shp

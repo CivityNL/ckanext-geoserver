@@ -1,6 +1,6 @@
 # coding=utf-8
 from pylons import config
-import ckanext.datastore.db as db
+import ckanext.datastore.backend.postgres as db
 from ckan.plugins import toolkit
 from sqlalchemy.exc import ProgrammingError
 
@@ -48,7 +48,7 @@ class Datastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                    )
+                )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -65,7 +65,7 @@ class Datastored(object):
                     res_id=self.resource_id,
                     old_val=item['id'],
                     new_val=clean
-                    )
+                )
                 trans = connection.begin()
                 connection.execute(sql)
                 trans.commit()
@@ -77,7 +77,7 @@ class Datastored(object):
             'connection_url': self.connection_url,
             'package_id': self.resource_id
         }
-        engine = db._get_engine(conn_params)
+        engine = db._get_engine_from_url(self.connection_url)
         connection = engine.connect()
         sql = "DROP MATERIALIZED VIEW IF EXISTS _" + re.sub('-', '_', self.resource_id)
         trans = connection.begin()
@@ -93,18 +93,19 @@ class Datastored(object):
         Resource in datastore database is checked for Geometry field. If the field doesn't exists then calculates the
         geometry field value and creates it in the table.
         """
+
         # Get the connection parameters for the datastore
         conn_params = {
             'connection_url': self.connection_url,
             'resource_id': self.resource_id
         }
-        engine = db._get_engine(conn_params)
+        engine = db._get_engine_from_url(self.connection_url)
         connection = engine.connect()
         try:
             # This will fail with a ProgrammingError if the table does not exist
             fields = db._get_fields({
-                                        "connection": connection
-                                    }, conn_params)
+                "connection": connection
+            }, conn_params)
         except ProgrammingError as ex:
             raise toolkit.ObjectNotFound(toolkit._("Resource not found in datastore database"))
 
@@ -112,13 +113,14 @@ class Datastored(object):
         if not True in set(col['id'] == self.geo_col for col in fields):
             # ... append one
             fields.append({
-                              'id': self.geo_col,
-                              'type': u'geometry'
-                          })
+                'id': self.geo_col,
+                'type': u'geometry'
+            })
 
             self.clean_fields(connection, fields)
             # SQL to create the geometry column
-            sql = "SELECT AddGeometryColumn('public', '%s', '%s', 4326, 'GEOMETRY', 2)" % (self.resource_id, self.geo_col)
+            sql = "SELECT AddGeometryColumn('public', '%s', '%s', 4326, 'GEOMETRY', 2)" % (
+            self.resource_id, self.geo_col)
 
             # Create the new column
             trans = connection.begin()
@@ -152,10 +154,13 @@ class Datastored(object):
                     postgresdate = self.convertIsoToPostgres(fields.get('date_format'))
                 else:
                     postgresdate = self.convertIsoToPostgres('default')
-                sql += "to_timestamp(CAST(\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as text), \'" + postgresdate + "\') as \"" + self.clean_name(
+                sql += "to_timestamp(CAST(\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'),
+                                                                                              '_') + "\" as text), \'" + postgresdate + "\') as \"" + self.clean_name(
                     fields.get('field_id'), '_') + "\", "
             else:
-                sql += "\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'), '_') + "\" as \"" + self.clean_name(fields.get('field_id'), '_') + "\", "
+                sql += "\"" + self.table_name() + "\".\"" + self.clean_name(fields.get('field_id'),
+                                                                            '_') + "\" as \"" + self.clean_name(
+                    fields.get('field_id'), '_') + "\", "
 
         sql += "\"" + self.table_name() + "\".\"" + self.geo_col + "\" as \"" + self.geo_col + "\", "
 
